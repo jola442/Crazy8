@@ -8,11 +8,84 @@ import "./index.css"
 import {v4 as uuidv4} from "uuid";
 
 let stompClient = null;
-const GAME_SESSION_STORAGE_KEY = "crazy8.game"
-const PLAYER_SESSION_STORAGE_KEY = "crazy8.player"
 
 function PlayRoom() {
- 
+
+const handleName = (event)=>{
+    const newUserName = event.target.value;
+    setUser({...user, ...{name: newUserName}})
+}
+
+const registerUser = () => {
+    let Sock = new SockJS("http://localhost:8080/ws")
+    stompClient = over(Sock);
+    stompClient.connect({}, onConnected, onError);
+}
+
+const onConnected = () =>{
+    setUser({...user, ...{connected:true}});
+    stompClient.subscribe("/playroom/public", onPublicMessageReceived);
+    stompClient.subscribe("/player/" + user.name + "/private", onPrivateMessageReceived);
+    userJoins();
+}
+
+const onError = (error) => {
+    console.log(error);
+}
+const userJoins = () =>{
+    let message = {
+        name: user.name,
+        message: user.message,
+        status: 'JOIN'
+    };
+    stompClient.send("/app/message", {}, JSON.stringify(message));
+}
+
+const onPublicMessageReceived = (payload) => {
+    let payloadData = JSON.parse(payload.body);
+    switch(payloadData.status){
+        case "JOIN":
+          break;
+        case "MESSAGE":
+            setGame(...game, ...{topCard: payloadData.message});
+            break; 
+        default:
+            break;
+    }
+}
+
+const onPrivateMessageReceived = (payload) => {
+    let payloadData = JSON.parse(payload.body);
+    setUser({...user, ...{score: payloadData.score}})
+    console.log(payloadData.message);
+}
+
+const sendPublicMessage = ()=>{
+    if(stompClient){
+        let messageToSend = {
+            name: user.name,
+            message: user.message,
+            status: 'MESSAGE'
+        };
+        stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+        setUser({...user, ...{message:""}});
+    }
+}
+
+const sendPrivateMessage = ()=>{
+    if(stompClient){
+        let messageToSend = {
+            name: user.name,
+            message: user.message,
+            status: 'MESSAGE'
+        };
+        stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+        setUser({...user, ...{message:""}});
+    }
+}
+
+}
+
 
   return (
     <div className="container">
