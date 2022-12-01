@@ -8,83 +8,151 @@ import "./index.css"
 import {v4 as uuidv4} from "uuid";
 
 let stompClient = null;
+const GAME_SESSION_STORAGE_KEY = "crazy8.game"
+const PLAYER_SESSION_STORAGE_KEY = "crazy8.player"
 
 function PlayRoom() {
+    const [user, setUser] = useState({
+        name:"",
+        connected: false,
+        message:"",
+        score:"0",
+        id:"0"
+    })
 
-const handleName = (event)=>{
-    const newUserName = event.target.value;
-    setUser({...user, ...{name: newUserName}})
-}
+    const [hand, setHand] = useState([{id: uuidv4(), suit:"clubs", rank:"ace", front:true, selected:false}, {id: uuidv4(), suit:"diamonds", rank:5, front:true, selected:false}, {id: uuidv4(), suit:"diamonds", rank:4, front:true, selected:false}, {id: uuidv4(), suit:"hearts", rank:2, front:true, selected:false},{id: uuidv4(), suit:"spades", rank:"queen", front:true, selected:false}, {id: uuidv4(), suit:"hearts", rank:"king", front:true, selected:false}])
+    const [game, setGame] = useState({
+        topCard: {id:uuidv4(), suit:"clubs", rank:5, front:true, selected:false},
+        turn: 1,
+        direction: "Left",
+    })
 
-const registerUser = () => {
-    let Sock = new SockJS("http://localhost:8080/ws")
-    stompClient = over(Sock);
-    stompClient.connect({}, onConnected, onError);
-}
+    const [cardsToPlay, setCardsToPlay] = useState([]);
 
-const onConnected = () =>{
-    setUser({...user, ...{connected:true}});
-    stompClient.subscribe("/playroom/public", onPublicMessageReceived);
-    stompClient.subscribe("/player/" + user.name + "/private", onPrivateMessageReceived);
-    userJoins();
-}
+    useEffect(() => {
+    console.log("a re-render happened");
+      const storedGame = JSON.parse(sessionStorage.getItem(GAME_SESSION_STORAGE_KEY));
+      const storedPlayer = JSON.parse(sessionStorage.getItem(PLAYER_SESSION_STORAGE_KEY));
+    
+      if(storedGame){
+        setGame(storedGame)
+      }
 
-const onError = (error) => {
-    console.log(error);
-}
-const userJoins = () =>{
-    let message = {
-        name: user.name,
-        message: user.message,
-        status: 'JOIN'
-    };
-    stompClient.send("/app/message", {}, JSON.stringify(message));
-}
+      if(storedPlayer){
+        setUser(storedPlayer);
+      }
 
-const onPublicMessageReceived = (payload) => {
-    let payloadData = JSON.parse(payload.body);
-    switch(payloadData.status){
-        case "JOIN":
-          break;
-        case "MESSAGE":
-            setGame(...game, ...{topCard: payloadData.message});
-            break; 
-        default:
-            break;
+    }, [])
+
+    useEffect(() => {
+        sessionStorage.setItem(GAME_SESSION_STORAGE_KEY, JSON.stringify(game));
+      }, [game])
+
+      useEffect(() => {
+        sessionStorage.setItem(PLAYER_SESSION_STORAGE_KEY, JSON.stringify(user));
+      }, [user])
+
+    
+    const handleName = (event)=>{
+        const newUserName = event.target.value;
+        setUser({...user, ...{name: newUserName}})
     }
-}
 
-const onPrivateMessageReceived = (payload) => {
-    let payloadData = JSON.parse(payload.body);
-    setUser({...user, ...{score: payloadData.score}})
-    console.log(payloadData.message);
-}
+    const registerUser = () => {
+        let Sock = new SockJS("http://localhost:8080/ws")
+        stompClient = over(Sock);
+        stompClient.connect({}, onConnected, onError);
+    }
 
-const sendPublicMessage = ()=>{
-    if(stompClient){
-        let messageToSend = {
+    const onConnected = () =>{
+        setUser({...user, ...{connected:true}});
+        stompClient.subscribe("/playroom/public", onPublicMessageReceived);
+        stompClient.subscribe("/player/" + user.name + "/private", onPrivateMessageReceived);
+        userJoins();
+    }
+
+    const onError = (error) => {
+        console.log(error);
+    }
+    const userJoins = () =>{
+        let message = {
             name: user.name,
             message: user.message,
-            status: 'MESSAGE'
+            status: 'JOIN'
         };
-        stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-        setUser({...user, ...{message:""}});
+        stompClient.send("/app/message", {}, JSON.stringify(message));
     }
-}
 
-const sendPrivateMessage = ()=>{
-    if(stompClient){
-        let messageToSend = {
-            name: user.name,
-            message: user.message,
-            status: 'MESSAGE'
-        };
-        stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-        setUser({...user, ...{message:""}});
+    const onPublicMessageReceived = (payload) => {
+        let payloadData = JSON.parse(payload.body);
+        switch(payloadData.status){
+            case "JOIN":
+              break;
+            case "MESSAGE":
+                setGame(...game, ...{topCard: payloadData.message});
+                break; 
+            default:
+                break;
+        }
     }
-}
 
-}
+    const onPrivateMessageReceived = (payload) => {
+        let payloadData = JSON.parse(payload.body);
+        setUser({...user, ...{score: payloadData.score}})
+        console.log(payloadData.message);
+    }
+
+    const sendPublicMessage = ()=>{
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: user.message,
+                status: 'MESSAGE'
+            };
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+            setUser({...user, ...{message:""}});
+        }
+    }
+
+    const sendPrivateMessage = ()=>{
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: user.message,
+                status: 'MESSAGE'
+            };
+            stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+            setUser({...user, ...{message:""}});
+        }
+    }
+
+    function toggleSelectedCard(id){
+        const newHand = [...hand];
+        const selectedCard = newHand.find( card => card.id === id);
+        if(selectedCard){
+            selectedCard.selected = !selectedCard.selected;
+            setHand(newHand);
+            handleCardToPlay(selectedCard);
+        }
+
+    }
+
+    function handleCardToPlay(card){
+        let cardIndex = cardsToPlay.indexOf(card);
+        let newCardsToPlay;
+        if(cardIndex === -1){
+            newCardsToPlay = [...cardsToPlay]
+            newCardsToPlay.push(card)
+            setCardsToPlay(newCardsToPlay);
+        }
+
+        else{
+            console.log(cardIndex);
+            newCardsToPlay = [...cardsToPlay]
+            newCardsToPlay.splice(cardIndex, 1);
+            setCardsToPlay(newCardsToPlay);
+        }
+    }
 
 
   return (
