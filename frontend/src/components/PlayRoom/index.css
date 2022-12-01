@@ -1,0 +1,120 @@
+body {
+    margin: 0;
+    background-color:burlywood;
+    text-decoration: none;
+    padding:0;
+    margin:0;
+    font-family:'Times New Roman', Times, serif;
+}
+  
+.container{
+    display: flex;
+    flex-direction: column;
+    /* justify-content: space-evenly; */
+}
+  
+.top{
+    display: flex;
+    justify-content: space-around;
+}
+
+ul{
+    padding: 0;
+    list-style: none;
+}
+
+.game-cards{
+    display: flex;
+    gap:2em;
+    justify-content: center;
+    align-items: center;
+    justify-content: space-evenly;
+}
+  
+.game-stats{
+    width: max-content;
+    font-size: 1.75em;
+}
+  
+.top-card{
+    text-align: center;
+}
+
+
+.hand{
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.stockpile-card-container{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.hand h2{
+    width:100%;
+}
+
+.info-center{
+    display: flex;
+    flex-direction: column;
+    gap:1em;
+    width: 20%;
+}
+
+.announcements{
+    background-color: white;
+    height: 10em;
+    width: 100%;
+}
+
+.send-message{
+    width: 100%;
+}
+
+.input-message{
+    width: 100%;
+    padding: 0;
+    border:1px solid black;
+    height:2em;
+}
+
+.join-game{
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#join-textbox{
+    padding: 0;
+    border:1px solid black;
+    height:3em;
+    font-size: 1em;
+}
+
+#join-button{
+    padding: 0;
+    border:1px solid black;
+    height:3em;
+    font-size: 1em;
+}
+
+button{
+    height:3em;
+    font-size: 1em;
+    background-color: black;
+    color:whitesmoke;
+}
+
+.action-buttons{
+    display:flex;
+    justify-content: space-between;
+}
+
+label{
+    color:blue;
+}
