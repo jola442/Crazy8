@@ -1,0 +1,11 @@
+.card img{
+    width:10em;
+    height:15em;
+    outline-color: none;
+}
+
+.card.active img{
+    outline-color:black;
+    outline-style: solid;
+
+}
