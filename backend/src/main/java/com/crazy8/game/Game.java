@@ -11,11 +11,11 @@ public class Game {
 
     public Game(){
         deck = new Deck();
-        numCards = 0;
-        numSpadesCards = 0;
-        numDiamondsCards = 0;
-        numClubsCards = 0;
-        numHeartsCards = 0;
+        numCards = Defs.NUM_CARDS;
+        numSpadesCards = Rank.values().length;
+        numDiamondsCards = Rank.values().length;
+        numClubsCards = Rank.values().length;
+        numHeartsCards = Rank.values().length;
     }
 
     public int getNumCards() {
@@ -52,6 +52,7 @@ public class Game {
         else{
             numHeartsCards--;
         }
+        numCards--;
         return deck.getDeck().remove(0);
     }
 

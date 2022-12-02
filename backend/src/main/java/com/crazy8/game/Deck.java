@@ -14,6 +14,7 @@ public class Deck {
         for(int i = 0; i < Rank.values().length; ++i){
             for(int j = 0; j < Suit.values().length; ++j){
                 Card card = new Card(Rank.values()[i], Suit.values()[j]);
+                deck.add(card);
             }
         }
 
