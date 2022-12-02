@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import DOMPurify from 'dompurify';
 import Cards from '../Cards';
 import Card from "../Card"
@@ -10,6 +10,7 @@ import {v4 as uuidv4} from "uuid";
 let stompClient = null;
 const GAME_SESSION_STORAGE_KEY = "crazy8.game"
 const PLAYER_SESSION_STORAGE_KEY = "crazy8.player"
+const ANNOUNCEMENTS_STORAGE_KEY = "crazy8.announcement"
 
 function PlayRoom() {
     const [user, setUser] = useState({
@@ -17,22 +18,26 @@ function PlayRoom() {
         connected: false,
         message:"",
         score:"0",
-        id:"0"
+        id:null
     })
 
-    const [hand, setHand] = useState([{id: uuidv4(), suit:"clubs", rank:"ace", front:true, selected:false}, {id: uuidv4(), suit:"diamonds", rank:5, front:true, selected:false}, {id: uuidv4(), suit:"diamonds", rank:4, front:true, selected:false}, {id: uuidv4(), suit:"hearts", rank:2, front:true, selected:false},{id: uuidv4(), suit:"spades", rank:"queen", front:true, selected:false}, {id: uuidv4(), suit:"hearts", rank:"king", front:true, selected:false}])
+    const [hand, setHand] = useState([])
     const [game, setGame] = useState({
-        topCard: {id:uuidv4(), suit:"clubs", rank:5, front:true, selected:false},
-        turn: 1,
+        topCard: null,
+        turn: 0,
         direction: "Left",
+        scores:["0","0","0","0"]
     })
 
     const [cardsToPlay, setCardsToPlay] = useState([]);
+    const [announcements, setAnnouncements] = useState([]);
+    const usernameTextBox = useRef();
 
     useEffect(() => {
     console.log("a re-render happened");
       const storedGame = JSON.parse(sessionStorage.getItem(GAME_SESSION_STORAGE_KEY));
       const storedPlayer = JSON.parse(sessionStorage.getItem(PLAYER_SESSION_STORAGE_KEY));
+      const storedAnnouncements = JSON.parse(sessionStorage.getItem(ANNOUNCEMENTS_STORAGE_KEY));
     
       if(storedGame){
         setGame(storedGame)
@@ -42,6 +47,11 @@ function PlayRoom() {
         setUser(storedPlayer);
       }
 
+      if(storedAnnouncements){
+        console.log("storing this announcement array", announcements)
+        setAnnouncements(storedAnnouncements);
+      }
+
     }, [])
 
     useEffect(() => {
@@ -49,15 +59,48 @@ function PlayRoom() {
       }, [game])
 
       useEffect(() => {
+        console.log("Saving this user:", user);
         sessionStorage.setItem(PLAYER_SESSION_STORAGE_KEY, JSON.stringify(user));
       }, [user])
 
-    
-    const handleName = (event)=>{
-        const newUserName = event.target.value;
-        setUser({...user, ...{name: newUserName}})
-    }
+      useEffect(() => {
+        console.log("Saving this announcement array:", announcements)
+        sessionStorage.setItem(ANNOUNCEMENTS_STORAGE_KEY, JSON.stringify(announcements));
+      }, [announcements])
 
+
+      useEffect( () => {
+        console.log("Current Announcements", announcements);
+      }, [announcements])
+
+      useEffect( () => {
+        console.log("Current User", user);
+      }, [user])
+
+      
+    function handleCardToPlay(card){
+      let cardIndex = cardsToPlay.indexOf(card);
+      let newCardsToPlay;
+      if(cardIndex === -1){
+          newCardsToPlay = [...cardsToPlay]
+          newCardsToPlay.push(card)
+          setCardsToPlay(newCardsToPlay);
+      }
+
+      else{
+          console.log(cardIndex);
+          newCardsToPlay = [...cardsToPlay]
+          newCardsToPlay.splice(cardIndex, 1);
+          setCardsToPlay(newCardsToPlay);
+      }
+  }
+
+  const saveUsername = () =>{
+    let username = usernameTextBox.current.value;
+    setUser({...user, ...{name: username}})
+  }
+
+  // Networking functions
     const registerUser = () => {
         let Sock = new SockJS("http://localhost:8080/ws")
         stompClient = over(Sock);
@@ -65,9 +108,8 @@ function PlayRoom() {
     }
 
     const onConnected = () =>{
-        setUser({...user, ...{connected:true}});
+        saveUsername();
         stompClient.subscribe("/playroom/public", onPublicMessageReceived);
-        stompClient.subscribe("/player/" + user.name + "/private", onPrivateMessageReceived);
         userJoins();
     }
 
@@ -78,19 +120,25 @@ function PlayRoom() {
         let message = {
             name: user.name,
             message: user.message,
-            status: 'JOIN'
+            action: 'JOIN'
         };
         stompClient.send("/app/message", {}, JSON.stringify(message));
     }
 
     const onPublicMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
-        switch(payloadData.status){
+        switch(payloadData.action){
             case "JOIN":
+              let newUserState 
+              if(!user.id){
+                newUserState = {...user, ...{connected:true, id:payloadData.id}}
+                stompClient.subscribe("/player/" + payloadData.id + "/private", onPrivateMessageReceived);
+              }
+
+              announcements.push({id:uuidv4(), message:payloadData.message});
+              setAnnouncements([...announcements]);
+              setUser(newUserState);
               break;
-            case "MESSAGE":
-                setGame(...game, ...{topCard: payloadData.message});
-                break; 
             default:
                 break;
         }
@@ -107,7 +155,7 @@ function PlayRoom() {
             let messageToSend = {
                 name: user.name,
                 message: user.message,
-                status: 'MESSAGE'
+                action:""
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
             setUser({...user, ...{message:""}});
@@ -119,7 +167,8 @@ function PlayRoom() {
             let messageToSend = {
                 name: user.name,
                 message: user.message,
-                status: 'MESSAGE'
+                action: 'MESSAGE',
+                id:user.id
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
             setUser({...user, ...{message:""}});
@@ -137,22 +186,6 @@ function PlayRoom() {
 
     }
 
-    function handleCardToPlay(card){
-        let cardIndex = cardsToPlay.indexOf(card);
-        let newCardsToPlay;
-        if(cardIndex === -1){
-            newCardsToPlay = [...cardsToPlay]
-            newCardsToPlay.push(card)
-            setCardsToPlay(newCardsToPlay);
-        }
-
-        else{
-            console.log(cardIndex);
-            newCardsToPlay = [...cardsToPlay]
-            newCardsToPlay.splice(cardIndex, 1);
-            setCardsToPlay(newCardsToPlay);
-        }
-    }
 
 
   return (
@@ -165,19 +198,19 @@ function PlayRoom() {
         <ul className='player-scores'>
             <li className='player-1'>
                 <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 1's score: ")}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.playerOneScore)}}/>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[0].toString())}}/>
             </li>
             <li className='player-2'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 2's score: " + game.playerTwoScore)}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.playerTwoScore)}}/>
+                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 2's score: ")}}/>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[1].toString())}}/>
             </li>
             <li className='player-3'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 3's score: " + game.playerThreeScore)}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.playerThreeScore)}}/>
+                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 3's score: ")}}/>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[2].toString())}}/>
             </li>
             <li className='player-4'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 4's score: " + game.playerFourScore)}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.playerFourScore)}}/>
+                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 4's score: ")}}/>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[3].toString())}}/>
             </li>
         </ul>
 
@@ -196,7 +229,8 @@ function PlayRoom() {
             <div className = "game-cards">
                 <div className='top-card'>
                     <h2>Top Card</h2>
-                    <Card card={game.topCard} selected={game.topCard.selected} toggleSelectedCard={toggleSelectedCard}></Card>
+                    {game.topCard? <Card card={game.topCard} selected={game.topCard.selected} toggleSelectedCard={toggleSelectedCard}></Card>
+                    :<div style={{width:"10em", height: "15em", outlineColor:"black", outlineStyle:"solid"}}></div>}
                 </div>
 
                 <div className='stockpile-card-container'>
@@ -211,7 +245,9 @@ function PlayRoom() {
         <div className='info-center'>
             <h2>Announcements</h2>
             <div className='announcements'>
-                
+                {announcements.length > 0 && announcements.map( announcement =>(
+                  <p className="annoucement" key = {announcement.id} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(announcement.message)}}/>
+                ))}
             </div>
 
 
@@ -236,7 +272,7 @@ function PlayRoom() {
         </>
         :
         <div className='join-game'>
-            <input id="join-textbox" placeholder='Enter your name here' value={user.name} onChange={handleName}/>
+            <input type="text" id="join-textbox" placeholder='Enter your name here' ref={usernameTextBox}/>
             <button id="join-button" onClick={registerUser}>Join Game</button>
         </div>}
     </div>

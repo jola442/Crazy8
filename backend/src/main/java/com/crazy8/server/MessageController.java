@@ -29,8 +29,10 @@ public class MessageController {
             players.add(player);
             player.setId(numPlayers++);
             response.setId(Integer.toString(player.getId()));
+            response.setMessage("Player " + (player.getId()+1) + " has joined." );
         }
-        response.setMessage("Hello all");
+
+
 
         return response;
     }
@@ -38,7 +40,7 @@ public class MessageController {
     @MessageMapping("/private-message")
     public ServerMessage receivePrivateMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
-        simpMessagingTemplate.convertAndSendToUser(message.getName(), "/private", message); //user/David/private
+        simpMessagingTemplate.convertAndSendToUser(message.getId(), "/private", message); //user/0/private
         response.setMessage("Hello " + message.getName());
         return response;
     }

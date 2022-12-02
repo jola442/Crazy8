@@ -69,6 +69,7 @@ ul{
     background-color: white;
     height: 10em;
     width: 100%;
+    overflow-y: auto;
 }
 
 .send-message{

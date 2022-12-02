@@ -16,7 +16,14 @@ public class ServerMessage {
 
     public ServerMessage(){
         name = "";
-        id = "0";
+        id = "-1";
+        cards = "";
+        message = "";
+        scores = "0,0,0,0";
+        action = Action.JOIN;
+        gameDirection = "Left";
+        turn = "0";
+        roundNum = "1";
     }
 
     public String getName() {
