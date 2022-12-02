@@ -18,15 +18,17 @@ public class MessageController {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     private List<Player> players = new ArrayList<>();
+    private int numPlayers = 0;
 
     @MessageMapping("/message")  //app/message
     @SendTo("/playroom/public")
     private ServerMessage receivePublicMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         if(message.getAction() == Action.JOIN){
-            Player player = new Player(message.getName(), Integer.toString(players.size()+1) );
+            Player player = new Player(message.getName(),0);
             players.add(player);
-            response.setId(player.getId());
+            player.setId(numPlayers++);
+            response.setId(Integer.toString(player.getId()));
         }
         response.setMessage("Hello all");
 
