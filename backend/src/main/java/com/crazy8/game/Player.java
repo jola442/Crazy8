@@ -19,7 +19,7 @@ public class Player {
         name = "";
         score = 0;
         id = -1;
-
+        hand = new ArrayList<>();
     }
 
     public String getName() {
