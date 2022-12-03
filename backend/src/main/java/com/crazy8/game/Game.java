@@ -55,21 +55,16 @@ public class Game {
         return topCard;
     }
 
-    public Card drawCard(Player player){
-        if(deck.getDeck().isEmpty()){
-            return null;
-        }
-        Card topCard = deck.getDeck().remove(0);
-        player.getHand().add(topCard);
-        if(topCard.getSuit() == Suit.DIAMONDS){
+    public void updateCardCount(Card card){
+        if(card.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;
         }
 
-        else if(topCard.getSuit() == Suit.CLUBS){
+        else if(card.getSuit() == Suit.CLUBS){
             numClubsCards--;
         }
 
-        else if(topCard.getSuit() == Suit.SPADES){
+        else if(card.getSuit() == Suit.SPADES){
             numSpadesCards--;
         }
 
@@ -77,7 +72,16 @@ public class Game {
             numHeartsCards--;
         }
         numCards--;
-        return topCard;
+    }
+
+    public Card drawCard(Player player){
+        if(deck.getDeck().isEmpty()){
+            return null;
+        }
+        Card topStockpileCard = deck.getDeck().remove(0);
+        player.getHand().add(topStockpileCard);
+        updateCardCount(topStockpileCard);
+        return topStockpileCard;
     }
 
     public Card placeStartingCard(){
@@ -89,10 +93,11 @@ public class Game {
             Collections.shuffle(deck.getDeck());
         }
         topCard = newTopCard;
+        updateCardCount(topCard);
         return newTopCard;
     }
 
-    public boolean start(){
+    public boolean startRound(){
         if(numCards < 21){
             return false;
         }
@@ -107,8 +112,6 @@ public class Game {
 
         placeStartingCard();
         return true;
-
-
     }
 
 }

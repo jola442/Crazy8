@@ -25,7 +25,7 @@ public class MessageController {
     private ServerMessage receivePublicMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         if(message.getAction() == Action.JOIN){
-            Player player = new Player(message.getName(),0);
+            Player player = new Player(message.getName());
             game.getPlayers().add(player);
             player.setId(game.getPlayers().size());
             response.setId(Integer.toString(player.getId()));

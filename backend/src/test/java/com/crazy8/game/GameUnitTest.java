@@ -35,7 +35,7 @@ class GameUnitTest {
         Player player3 = new Player("Player 3");
         Player player4 = new Player("Player 4");
         game.getPlayers().addAll(Arrays.asList(player1, player2, player3, player4));
-        game.start();
+        game.startRound();
         assertFalse(game.getTopCard()==null);
         assertFalse(player1.getHand().contains(null));
         assertFalse(player2.getHand().contains(null));
