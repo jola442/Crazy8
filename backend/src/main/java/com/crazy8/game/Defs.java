@@ -22,6 +22,29 @@ public class Defs {
             this.value = value;
         }
 
+        @Override
+        public String toString() {
+            if(value == 1){
+                return "ace";
+            }
+
+            else if(value == 11){
+                return "jack";
+            }
+
+            else if(value == 12){
+                return "queen";
+            }
+
+            else if(value == 13){
+                return "king";
+            }
+
+            else{
+                return Integer.toString(value);
+            }
+
+        }
     }
 
     public enum Suit {

@@ -1,4 +1,5 @@
 package com.crazy8.server;
+import com.crazy8.game.Card;
 import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
@@ -17,6 +18,7 @@ public class MessageController {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    private Game game = new Game();
     private List<Player> players = new ArrayList<>();
     private int numPlayers = 0;
 
@@ -28,7 +30,6 @@ public class MessageController {
             Player player = new Player(message.getName(),0);
             players.add(player);
             player.setId(numPlayers++);
-            response.setId(Integer.toString(player.getId()));
             response.setMessage("Player " + (player.getId()+1) + " has joined." );
         }
 
@@ -40,8 +41,18 @@ public class MessageController {
     @MessageMapping("/private-message")
     public ServerMessage receivePrivateMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
-        simpMessagingTemplate.convertAndSendToUser(message.getId(), "/private", message); //user/0/private
-        response.setMessage("Hello " + message.getName());
+        response.setName(message.getName());
+        if(message.getAction() == Action.DRAW){
+            Card drawnCard = game.drawCard();
+            String drawnCardSuit = drawnCard.getSuit().toString().toLowerCase();
+            String drawnCardRank = drawnCard.getRank().toString();
+            response.setCards("{\"suit\": \"" + drawnCardSuit+ "\", \"rank\": \""+ drawnCardRank  +"\"}" );
+
+        }
+
+        System.out.println(response.toString());
+        simpMessagingTemplate.convertAndSendToUser(response.getName(), "/private", response); //user/Jola/private
+
         return response;
     }
 

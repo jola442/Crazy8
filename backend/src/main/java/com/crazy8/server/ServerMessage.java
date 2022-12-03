@@ -2,7 +2,6 @@ package com.crazy8.server;
 import com.crazy8.server.Defs.Action;
 
 public class ServerMessage {
-    private String id;
     private String name;
     private String cards;
     private String message;
@@ -16,7 +15,6 @@ public class ServerMessage {
 
     public ServerMessage(){
         name = "";
-        id = "-1";
         cards = "";
         message = "";
         scores = "0,0,0,0";
@@ -32,14 +30,6 @@ public class ServerMessage {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public void setAction(Defs.Action action) {
@@ -96,5 +86,19 @@ public class ServerMessage {
 
     public void setRoundNum(String roundNum) {
         this.roundNum = roundNum;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerMessage{" +
+                ", name='" + name + '\'' +
+                ", cards='" + cards + '\'' +
+                ", message='" + message + '\'' +
+                ", scores='" + scores + '\'' +
+                ", action=" + action +
+                ", gameDirection='" + gameDirection + '\'' +
+                ", turn='" + turn + '\'' +
+                ", roundNum='" + roundNum + '\'' +
+                '}';
     }
 }

@@ -18,7 +18,6 @@ function PlayRoom() {
         connected: false,
         message:"",
         score:"0",
-        id:null
     })
 
     const [hand, setHand] = useState([])
@@ -31,7 +30,6 @@ function PlayRoom() {
 
     const [cardsToPlay, setCardsToPlay] = useState([]);
     const [announcements, setAnnouncements] = useState([]);
-    const usernameTextBox = useRef();
 
     useEffect(() => {
     console.log("a re-render happened");
@@ -48,7 +46,6 @@ function PlayRoom() {
       }
 
       if(storedAnnouncements){
-        console.log("storing this announcement array", announcements)
         setAnnouncements(storedAnnouncements);
       }
 
@@ -59,23 +56,21 @@ function PlayRoom() {
       }, [game])
 
       useEffect(() => {
-        console.log("Saving this user:", user);
         sessionStorage.setItem(PLAYER_SESSION_STORAGE_KEY, JSON.stringify(user));
       }, [user])
 
       useEffect(() => {
-        console.log("Saving this announcement array:", announcements)
         sessionStorage.setItem(ANNOUNCEMENTS_STORAGE_KEY, JSON.stringify(announcements));
       }, [announcements])
 
 
-      useEffect( () => {
-        console.log("Current Announcements", announcements);
-      }, [announcements])
+      // useEffect( () => {
+      //   console.log("Current Announcements", announcements);
+      // }, [announcements])
 
-      useEffect( () => {
-        console.log("Current User", user);
-      }, [user])
+      // useEffect( () => {
+      //   console.log("Current User", user);
+      // }, [user])
 
       
     function handleCardToPlay(card){
@@ -95,10 +90,10 @@ function PlayRoom() {
       }
   }
 
-  const saveUsername = () =>{
-    let username = usernameTextBox.current.value;
-    setUser({...user, ...{name: username}})
-  }
+  const handleUsername=(event)=>{
+    const {value}=event.target;
+    setUser({...user,"name": value});
+}
 
   // Networking functions
     const registerUser = () => {
@@ -108,8 +103,11 @@ function PlayRoom() {
     }
 
     const onConnected = () =>{
-        saveUsername();
+        // saveUsername();
+        setUser( (oldUser) => ({...oldUser, ...{connected:true}}));
         stompClient.subscribe("/playroom/public", onPublicMessageReceived);
+        console.log("current username:", user.name);
+        stompClient.subscribe('/player/'+user.name+'/private', onPrivateMessageReceived);
         userJoins();
     }
 
@@ -129,15 +127,7 @@ function PlayRoom() {
         let payloadData = JSON.parse(payload.body);
         switch(payloadData.action){
             case "JOIN":
-              let newUserState 
-              if(!user.id){
-                newUserState = {...user, ...{connected:true, id:payloadData.id}}
-                stompClient.subscribe("/player/" + payloadData.id + "/private", onPrivateMessageReceived);
-              }
-
-              announcements.push({id:uuidv4(), message:payloadData.message});
-              setAnnouncements([...announcements]);
-              setUser(newUserState);
+              setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))         
               break;
             default:
                 break;
@@ -146,8 +136,10 @@ function PlayRoom() {
 
     const onPrivateMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
-        setUser({...user, ...{score: payloadData.score}})
-        console.log(payloadData.message);
+        console.log("Received a private message!",payloadData);
+        let newCard = {...JSON.parse(payloadData.cards), ...{id:uuidv4(), selected:false, front:true}}
+        console.log(newCard);
+        setHand( (oldHand) => ([...oldHand, newCard]));
     }
 
     const sendPublicMessage = ()=>{
@@ -158,20 +150,19 @@ function PlayRoom() {
                 action:""
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-            setUser({...user, ...{message:""}});
+            setUser((oldUser)=>({...oldUser,...{message:""}}));
         }
     }
 
-    const sendPrivateMessage = ()=>{
+    const drawCard = ()=>{
         if(stompClient){
             let messageToSend = {
                 name: user.name,
                 message: user.message,
-                action: 'MESSAGE',
-                id:user.id
+                action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-            setUser({...user, ...{message:""}});
+            setUser((oldUser)=>({...oldUser,...{message:""}}));
         }
     }
 
@@ -253,7 +244,7 @@ function PlayRoom() {
 
             <div className='action-buttons'>
                 <button id='play-card-button' onClick={sendPublicMessage}>Play Card(s)</button>
-                <button id='draw-card-button' onClick={sendPrivateMessage}>Draw card</button>
+                <button id='draw-card-button' onClick={drawCard}>Draw card</button>
             </div>
 
         </div>
@@ -272,7 +263,7 @@ function PlayRoom() {
         </>
         :
         <div className='join-game'>
-            <input type="text" id="join-textbox" placeholder='Enter your name here' ref={usernameTextBox}/>
+            <input id="join-textbox" placeholder='Enter your name here' value={user.name} onChange={handleUsername}/>
             <button id="join-button" onClick={registerUser}>Join Game</button>
         </div>}
     </div>
