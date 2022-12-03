@@ -51,6 +51,10 @@ public class Game {
         return players;
     }
 
+    public Card getTopCard() {
+        return topCard;
+    }
+
     public Card drawCard(Player player){
         if(deck.getDeck().isEmpty()){
             return null;
@@ -86,6 +90,25 @@ public class Game {
         }
         topCard = newTopCard;
         return newTopCard;
+    }
+
+    public boolean start(){
+        if(numCards < 21){
+            return false;
+        }
+
+        for(Player player: players){
+            for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
+                if(drawCard(player) == null){
+                    return false;
+                }
+            }
+        }
+
+        placeStartingCard();
+        return true;
+
+
     }
 
 }

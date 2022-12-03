@@ -55,4 +55,5 @@ public class Defs {
     }
 
     public static final int NUM_CARDS = 52;
+    public static final int NUM_STARTING_CARDS = 5;
 }

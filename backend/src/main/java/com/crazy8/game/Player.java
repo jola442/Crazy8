@@ -9,9 +9,9 @@ public class Player {
     private int id;
     private List<Card> hand;
 
-    public Player(String name, int score) {
+    public Player(String name) {
         this.name = name;
-        this.score = score;
+        score = 0;
         hand = new ArrayList<>();
     }
 
