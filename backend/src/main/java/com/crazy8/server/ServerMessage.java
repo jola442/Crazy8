@@ -10,6 +10,7 @@ public class ServerMessage {
     private String gameDirection;
     private String turn;
     private String roundNum;
+    private String id;
 
 
 
@@ -20,8 +21,9 @@ public class ServerMessage {
         scores = "0,0,0,0";
         action = Action.JOIN;
         gameDirection = "Left";
-        turn = "0";
+        turn = "1";
         roundNum = "1";
+        id = "-1";
     }
 
     public String getName() {
@@ -88,10 +90,18 @@ public class ServerMessage {
         this.roundNum = roundNum;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "ServerMessage{" +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", cards='" + cards + '\'' +
                 ", message='" + message + '\'' +
                 ", scores='" + scores + '\'' +
@@ -99,6 +109,7 @@ public class ServerMessage {
                 ", gameDirection='" + gameDirection + '\'' +
                 ", turn='" + turn + '\'' +
                 ", roundNum='" + roundNum + '\'' +
+                ", id='" + id + '\'' +
                 '}';
     }
 }

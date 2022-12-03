@@ -19,8 +19,6 @@ public class MessageController {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     private Game game = new Game();
-    private List<Player> players = new ArrayList<>();
-    private int numPlayers = 0;
 
     @MessageMapping("/message")  //app/message
     @SendTo("/playroom/public")
@@ -28,9 +26,10 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         if(message.getAction() == Action.JOIN){
             Player player = new Player(message.getName(),0);
-            players.add(player);
-            player.setId(numPlayers++);
-            response.setMessage("Player " + (player.getId()+1) + " has joined." );
+            game.getPlayers().add(player);
+            player.setId(game.getPlayers().size());
+            response.setId(Integer.toString(player.getId()));
+            response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
         }
 
 
@@ -42,11 +41,20 @@ public class MessageController {
     public ServerMessage receivePrivateMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        if(message.getAction() == Action.DRAW){
-            Card drawnCard = game.drawCard();
-            String drawnCardSuit = drawnCard.getSuit().toString().toLowerCase();
-            String drawnCardRank = drawnCard.getRank().toString();
-            response.setCards("{\"suit\": \"" + drawnCardSuit+ "\", \"rank\": \""+ drawnCardRank  +"\"}" );
+        Player player = null;
+        for(Player p: game.getPlayers()){
+            if(p.getName().equalsIgnoreCase(message.getName())){
+                player = p;
+            }
+        }
+
+        if(message.getAction() == Action.DRAW && player != null){
+            Card drawnCard = game.drawCard(player);
+            if(drawnCard != null){
+                String drawnCardSuit = drawnCard.getSuit().toString().toLowerCase();
+                String drawnCardRank = drawnCard.getRank().toString();
+                response.setCards("{\"suit\": \"" + drawnCardSuit+ "\", \"rank\": \""+ drawnCardRank  +"\"}" );
+            }
 
         }
 

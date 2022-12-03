@@ -119,3 +119,8 @@ button{
 label{
     color:blue;
 }
+
+.play-order{
+    font-size: 1.75em;
+    text-align: center;
+}

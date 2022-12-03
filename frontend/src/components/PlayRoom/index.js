@@ -18,12 +18,13 @@ function PlayRoom() {
         connected: false,
         message:"",
         score:"0",
+        id:"-1",
     })
 
     const [hand, setHand] = useState([])
     const [game, setGame] = useState({
         topCard: null,
-        turn: 0,
+        turn: "1",
         direction: "Left",
         scores:["0","0","0","0"]
     })
@@ -127,8 +128,10 @@ function PlayRoom() {
         let payloadData = JSON.parse(payload.body);
         switch(payloadData.action){
             case "JOIN":
-              setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))         
-              break;
+                setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
+                setUser( (oldUser) => ({...oldUser, ...{id:payloadData.id}}));
+                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                break;
             default:
                 break;
         }
@@ -184,36 +187,41 @@ function PlayRoom() {
         {user.connected? 
         <>
 
-        <div className='top'>
-        <div className='game-stats'>
-        <ul className='player-scores'>
-            <li className='player-1'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 1's score: ")}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[0].toString())}}/>
-            </li>
-            <li className='player-2'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 2's score: ")}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[1].toString())}}/>
-            </li>
-            <li className='player-3'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 3's score: ")}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[2].toString())}}/>
-            </li>
-            <li className='player-4'>
-                <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 4's score: ")}}/>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[3].toString())}}/>
-            </li>
-        </ul>
+        <div className='top'> 
+            <div className='game-stats'>
+                <label>Name: </label>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(user.name)}}/>
+                <br></br>
+                <label>You are Player: </label>
+                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(user.id)}}/>
+                <ul className='player-scores'>
+                    <li className='player-1'>
+                        <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 1's score: ")}}/>
+                        <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[0].toString())}}/>
+                    </li>
+                    <li className='player-2'>
+                        <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 2's score: ")}}/>
+                        <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[1].toString())}}/>
+                    </li>
+                    <li className='player-3'>
+                        <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 3's score: ")}}/>
+                        <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[2].toString())}}/>
+                    </li>
+                    <li className='player-4'>
+                        <label dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player 4's score: ")}}/>
+                        <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.scores[3].toString())}}/>
+                    </li>
+                </ul>
 
-            <div className='turn'>
-                <label>Turn:</label>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
-            </div>
+                <div className='turn'>
+                    <label>Turn:</label>
+                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                </div>
 
-            <div className='game-direction'>
-                <label>Game Direction:</label>
-                <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
-            </div>
+                <div className='game-direction'>
+                    <label>Game Direction:</label>
+                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
+                </div>
         </div>     
 
         <div className='game-table'>
@@ -257,6 +265,11 @@ function PlayRoom() {
                 <h2>Hand</h2>
                 <Cards cardsList={[...hand]} toggleSelectedCard={toggleSelectedCard}/>
             </div>
+
+            <ul className="play-order">
+                <label>Current card play order:</label>
+                {cardsToPlay.length > 0 && cardsToPlay.map( (card) =>(<span key={uuidv4()} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank + " " + card.suit + "&#8594")}}></span>))}
+            </ul>
          </div>
 
 
