@@ -19,4 +19,10 @@ class GameUnitTest {
         assertEquals(0, game.getNumSpadesCards());
         assertEquals(0, game.getNumCards());
     }
+
+    @Test
+    public void testPlaceStartingCard(){
+        Card startingCard = game.placeStartingCard();
+        assertFalse(startingCard.getRank()==Rank.EIGHT);
+    }
 }
