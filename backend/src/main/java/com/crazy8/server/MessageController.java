@@ -40,39 +40,98 @@ public class MessageController {
         return cardsString;
     }
 
-    @MessageMapping("/message")  //app/message
-    @SendTo("/playroom/public")
-    private ServerMessage receivePublicMessage(@Payload ClientMessage message){
+    private ServerMessage handleUserJoining(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
-        if(message.getAction() == Action.JOIN){
-            //Creating the player model
-            Player player = new Player(message.getName());
-            game.getPlayers().add(player);
-            player.setId(game.getPlayers().size());
 
-            //Configuring the server response
-            response.setId(Integer.toString(player.getId()));
-            response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
-            response.setNumPlayers(Integer.toString(game.getPlayers().size()));
-        }
+        //Creating the player model
+        Player player = new Player(message.getName());
+        game.getPlayers().add(player);
+        player.setId(game.getPlayers().size());
 
-        else if(message.getAction() == Action.DRAW){
-            ArrayList<Card> startingCard = new ArrayList<>();
-            startingCard.add(game.placeStartingCard());
-            response.setCards(stringifyCards(startingCard));
-            response.setAction(Action.DRAW);
-        }
-
-
+        //Configuring the server response
+        response.setId(Integer.toString(player.getId()));
+        response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
+        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         return response;
     }
 
+    private ServerMessage handleSendingTopCard(@Payload ClientMessage message){
+        ServerMessage response = new ServerMessage();
+        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+        ArrayList<Card> startingCard = new ArrayList<>();
+        startingCard.add(game.placeStartingCard());
+        response.setCards(stringifyCards(startingCard));
+        response.setAction(Action.DRAW);
+        return response;
+    }
+
+
+    @MessageMapping("/message")  //app/message
+    @SendTo("/playroom/public")
+    private ServerMessage receivePublicMessage(@Payload ClientMessage message){
+        ServerMessage response = new ServerMessage();
+        if(message.getAction() == Action.JOIN){
+            response = handleUserJoining(message);
+        }
+
+        else if(message.getAction() == Action.DRAW){
+            response = handleSendingTopCard(message);
+        }
+
+        return response;
+    }
+
+    public ServerMessage handleSendingUserID(@Payload ClientMessage message, Player player){
+        ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setAction(Action.JOIN);
+        if(player == null){
+            response.setId(Integer.toString(game.getPlayers().size()+1));
+        }
+
+        else{
+            response.setId(Integer.toString(player.getId()));
+        }
+
+        return response;
+    }
+
+    private  ServerMessage  handleSendingStartingCards(@Payload ClientMessage message, Player player) {
+        ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setAction(Action.DRAW);
+        for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
+            game.drawCard(player);
+        }
+
+        response.setCards(stringifyCards(player.getHand()));
+        response.setMessage(message.getMessage());
+        return response;
+    }
+
+    private ServerMessage handleSendingDrawnCard(@Payload ClientMessage message, Player player) {
+        ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setAction(Action.DRAW);
+        Card drawnCard = game.drawCard(player);
+        if(drawnCard != null){
+            ArrayList<Card> cardsToSend = new ArrayList<>();
+            cardsToSend.add(drawnCard);
+            response.setCards(stringifyCards(cardsToSend));
+        }
+
+//        System.out.println(response.toString());
+//        simpMessagingTemplate.convertAndSendToUser(response.getName(), "/private", response); //user/Jola/private
+        return response;
+    }
+
+
     @MessageMapping("/private-message")
     public ServerMessage receivePrivateMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
+
         Player player = null;
         for(Player p: game.getPlayers()){
             if(p.getName().equalsIgnoreCase(message.getName())){
@@ -81,35 +140,16 @@ public class MessageController {
         }
 
         if(message.getAction() == Action.JOIN){
-            response.setAction(Action.JOIN);
-            if(player == null){
-                response.setId(Integer.toString(game.getPlayers().size()+1));
-            }
-
-            else{
-                response.setId(Integer.toString(player.getId()));
-            }
+            response = handleSendingUserID(message,player);
         }
-        System.out.println(message);
+
         if(message.getAction() == Action.DRAW && player != null){
-            response.setAction(Action.DRAW);
             if(message.getMessage().equalsIgnoreCase("starting cards")){
-                for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
-                    game.drawCard(player);
-                }
-
-                response.setCards(stringifyCards(player.getHand()));
-                response.setMessage(message.getMessage());
-
+                response = handleSendingStartingCards(message, player);
             }
 
             else{
-                Card drawnCard = game.drawCard(player);
-                if(drawnCard != null){
-                    ArrayList<Card> cardsToSend = new ArrayList<>();
-                    cardsToSend.add(drawnCard);
-                    response.setCards(stringifyCards(cardsToSend));
-                }
+                response = handleSendingDrawnCard(message, player);
             }
 
 
