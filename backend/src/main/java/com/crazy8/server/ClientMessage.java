@@ -6,13 +6,14 @@ public class ClientMessage {
     private String name;
     private Action action;
     private String cards;
-
+    private String message;
 
     public ClientMessage(){
         name = "";
         id = "0";
         action = Action.JOIN;
         cards = "";
+        message = "";
     }
 
     public String getName() {
@@ -47,5 +48,11 @@ public class ClientMessage {
         this.cards = cards;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
+    public String getMessage() {
+        return message;
+    }
 }

@@ -11,6 +11,7 @@ public class ServerMessage {
     private String turn;
     private String roundNum;
     private String id;
+    private String numPlayers;
 
 
 
@@ -24,6 +25,7 @@ public class ServerMessage {
         turn = "1";
         roundNum = "1";
         id = "-1";
+        numPlayers = "0";
     }
 
     public String getName() {
@@ -98,6 +100,14 @@ public class ServerMessage {
         this.id = id;
     }
 
+    public String getNumPlayers() {
+        return numPlayers;
+    }
+
+    public void setNumPlayers(String numPlayers) {
+        this.numPlayers = numPlayers;
+    }
+
     @Override
     public String toString() {
         return "ServerMessage{" +
@@ -110,6 +120,7 @@ public class ServerMessage {
                 ", turn='" + turn + '\'' +
                 ", roundNum='" + roundNum + '\'' +
                 ", id='" + id + '\'' +
+                ", numPlayers='" + numPlayers + '\'' +
                 '}';
     }
 }

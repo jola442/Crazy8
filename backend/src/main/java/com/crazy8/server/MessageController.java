@@ -3,6 +3,7 @@ import com.crazy8.game.Card;
 import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
+import com.crazy8.game.Defs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -20,6 +21,25 @@ public class MessageController {
 
     private Game game = new Game();
 
+    public String stringifyCards(List<Card> cards){
+        String cardsString = "[";
+        for(int i = 0; i < cards.size(); ++i){
+            Card card = cards.get(i);
+            String cardSuit = card.getSuit().toString().toLowerCase();
+            String cardRank = card.getRank().toString();
+
+            if(i < cards.size()-1){
+                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"},";
+            }
+
+            else{
+                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"}]";
+            }
+
+        }
+        return cardsString;
+    }
+
     @MessageMapping("/message")  //app/message
     @SendTo("/playroom/public")
     private ServerMessage receivePublicMessage(@Payload ClientMessage message){
@@ -30,6 +50,8 @@ public class MessageController {
             player.setId(game.getPlayers().size());
             response.setId(Integer.toString(player.getId()));
             response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
+            response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+
         }
 
 
@@ -48,13 +70,31 @@ public class MessageController {
             }
         }
 
+        System.out.println(message);
         if(message.getAction() == Action.DRAW && player != null){
-            Card drawnCard = game.drawCard(player);
-            if(drawnCard != null){
-                String drawnCardSuit = drawnCard.getSuit().toString().toLowerCase();
-                String drawnCardRank = drawnCard.getRank().toString();
-                response.setCards("{\"suit\": \"" + drawnCardSuit+ "\", \"rank\": \""+ drawnCardRank  +"\"}" );
+            if(message.getMessage().equalsIgnoreCase("starting cards")){
+                if(player.getId() == 1){
+                    game.placeStartingCard();
+                }
+
+                for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
+                    game.drawCard(player);
+                }
+
+                response.setCards(stringifyCards(player.getHand()));
+                response.setMessage(message.getMessage());
+
             }
+
+            else{
+                Card drawnCard = game.drawCard(player);
+                if(drawnCard != null){
+                    ArrayList<Card> cardsToSend = new ArrayList<>();
+                    cardsToSend.add(drawnCard);
+                    response.setCards(stringifyCards(cardsToSend));
+                }
+            }
+
 
         }
 
