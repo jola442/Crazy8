@@ -44,10 +44,14 @@ public class MessageController {
     @SendTo("/playroom/public")
     private ServerMessage receivePublicMessage(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
+        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
         if(message.getAction() == Action.JOIN){
+            //Creating the player model
             Player player = new Player(message.getName());
             game.getPlayers().add(player);
             player.setId(game.getPlayers().size());
+
+            //Configuring the server response
             response.setId(Integer.toString(player.getId()));
             response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
             response.setNumPlayers(Integer.toString(game.getPlayers().size()));
@@ -57,6 +61,7 @@ public class MessageController {
             ArrayList<Card> startingCard = new ArrayList<>();
             startingCard.add(game.placeStartingCard());
             response.setCards(stringifyCards(startingCard));
+            response.setAction(Action.DRAW);
         }
 
 
@@ -75,13 +80,20 @@ public class MessageController {
             }
         }
 
+        if(message.getAction() == Action.JOIN){
+            response.setAction(Action.JOIN);
+            if(player == null){
+                response.setId(Integer.toString(game.getPlayers().size()+1));
+            }
+
+            else{
+                response.setId(Integer.toString(player.getId()));
+            }
+        }
         System.out.println(message);
         if(message.getAction() == Action.DRAW && player != null){
+            response.setAction(Action.DRAW);
             if(message.getMessage().equalsIgnoreCase("starting cards")){
-                if(player.getId() == 1){
-                    game.placeStartingCard();
-                }
-
                 for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
                     game.drawCard(player);
                 }

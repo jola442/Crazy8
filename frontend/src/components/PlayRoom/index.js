@@ -126,6 +126,18 @@ function PlayRoom() {
             action: 'JOIN'
         };
         stompClient.send("/app/message", {}, JSON.stringify(message));
+        requestID();
+    }
+
+    function requestID(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: "",
+                action: 'JOIN',
+            };
+            stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+        }
     }
 
     function requestStartingCards(){
@@ -157,12 +169,12 @@ function PlayRoom() {
         switch(payloadData.action){
             case "JOIN":
                 setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
-                setUser( (oldUser) => ({...oldUser, ...{id:payloadData.id}}));
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 if(payloadData.numPlayers === "4"){
                     requestStartingCards();
                     requestTopCard();
                 }
+                break;
             case "DRAW":
                 let payloadCards = JSON.parse(payloadData.cards);
                 const newTopCard = payloadCards[0];
@@ -179,17 +191,24 @@ function PlayRoom() {
     const onPrivateMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
         console.log("Received a private message!",payloadData);
-        
-        // if(payloadData.message === "starting cards"){
-        let newCards = JSON.parse(payloadData.cards);
-        newCards.forEach(card => {
-            card.id = uuidv4();
-            card.selected = false;
-            card.front = true;    
-        })
 
-      
-        setHand( (oldHand) => ([...oldHand, ...newCards]));
+        switch(payloadData.action){
+            case "JOIN":
+                setUser( (oldUser) => ({...oldUser, ...{id:payloadData.id}}));
+                break;
+            case "DRAW":
+                let newCards = JSON.parse(payloadData.cards);
+                newCards.forEach(card => {
+                    card.id = uuidv4();
+                    card.selected = false;
+                    card.front = true;    
+                })
+                setHand( (oldHand) => ([...oldHand, ...newCards]));
+                break;
+            default:
+                break;
+        }
+    
     }
 
     const sendPublicMessage = ()=>{
