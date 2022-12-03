@@ -1,6 +1,9 @@
 package com.crazy8.game;
 import com.crazy8.game.Defs.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Game {
     private Deck deck;
     private int numCards;
@@ -8,6 +11,8 @@ public class Game {
     private int numHeartsCards;
     private int numDiamondsCards;
     private int numClubsCards;
+    List<Player> players;
+
 
     public Game(){
         deck = new Deck();
@@ -16,6 +21,7 @@ public class Game {
         numDiamondsCards = Rank.values().length;
         numClubsCards = Rank.values().length;
         numHeartsCards = Rank.values().length;
+        players = new ArrayList<>();
     }
 
     public int getNumCards() {
@@ -35,8 +41,20 @@ public class Game {
         return numDiamondsCards;
     }
 
-    public Card drawCard(){
-        Card topCard = deck.getDeck().get(0);
+    public int getNumClubsCards() {
+        return numClubsCards;
+    }
+
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+    public Card drawCard(Player player){
+        if(deck.getDeck().isEmpty()){
+            return null;
+        }
+        Card topCard = deck.getDeck().remove(0);
+        player.getHand().add(topCard);
         if(topCard.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;
         }
@@ -53,10 +71,8 @@ public class Game {
             numHeartsCards--;
         }
         numCards--;
-        return deck.getDeck().remove(0);
+        return topCard;
     }
 
-    public int getNumClubsCards() {
-        return numClubsCards;
-    }
+
 }

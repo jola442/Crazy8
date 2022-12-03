@@ -11,7 +11,7 @@ class GameUnitTest {
     @Test
     public void testDrawCard(){
         for(int i = 0; i < Defs.NUM_CARDS; ++i){
-            game.drawCard();
+            game.drawCard(new Player());
         }
         assertEquals(0, game.getNumClubsCards());
         assertEquals(0, game.getNumDiamondsCards());
