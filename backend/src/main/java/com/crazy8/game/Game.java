@@ -2,6 +2,7 @@ package com.crazy8.game;
 import com.crazy8.game.Defs.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Game {
@@ -12,7 +13,7 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     List<Player> players;
-
+    private Card topCard;
 
     public Game(){
         deck = new Deck();
@@ -22,6 +23,7 @@ public class Game {
         numClubsCards = Rank.values().length;
         numHeartsCards = Rank.values().length;
         players = new ArrayList<>();
+        topCard = null;
     }
 
     public int getNumCards() {
@@ -74,5 +76,16 @@ public class Game {
         return topCard;
     }
 
+    public Card placeStartingCard(){
+        if(deck.getDeck().isEmpty()){
+            return null;
+        }
+        Card newTopCard = deck.getDeck().get(0);
+        while(newTopCard.getRank() == Rank.EIGHT){
+            Collections.shuffle(deck.getDeck());
+        }
+        topCard = newTopCard;
+        return newTopCard;
+    }
 
 }
