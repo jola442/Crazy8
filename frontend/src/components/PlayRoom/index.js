@@ -16,7 +16,6 @@ function PlayRoom() {
     const [user, setUser] = useState({
         name:"",
         connected: false,
-        message:"",
         score:"0",
         id:"-1",
     })
@@ -137,7 +136,19 @@ function PlayRoom() {
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-            setUser((oldUser)=>({...oldUser,...{message:""}}));
+          
+        }
+    }
+
+    function requestTopCard(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: "top card",
+                action:"DRAW"
+            };
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
         }
     }
 
@@ -150,8 +161,15 @@ function PlayRoom() {
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 if(payloadData.numPlayers === "4"){
                     requestStartingCards();
+                    requestTopCard();
                 }
-               
+            case "DRAW":
+                let payloadCards = JSON.parse(payloadData.cards);
+                const newTopCard = payloadCards[0];
+                newTopCard.id = uuidv4();
+                newTopCard.selected = false;
+                newTopCard.front = true;    
+                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard}}));
                 break;
             default:
                 break;
@@ -172,15 +190,6 @@ function PlayRoom() {
 
       
         setHand( (oldHand) => ([...oldHand, ...newCards]));
-            
-        // }
-
-        // else{
-        //     let newCard = {...JSON.parse(payloadData.cards), ...{id:uuidv4(), selected:false, front:true}}
-        //     console.log(newCard);
-        //     setHand( (oldHand) => ([...oldHand, newCard]));
-        // }
- 
     }
 
     const sendPublicMessage = ()=>{
@@ -191,7 +200,7 @@ function PlayRoom() {
                 action:""
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-            setUser((oldUser)=>({...oldUser,...{message:""}}));
+          
         }
     }
 
@@ -203,7 +212,7 @@ function PlayRoom() {
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-            setUser((oldUser)=>({...oldUser,...{message:""}}));
+          
         }
     }
 

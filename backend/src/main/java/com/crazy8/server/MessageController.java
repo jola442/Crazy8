@@ -51,7 +51,12 @@ public class MessageController {
             response.setId(Integer.toString(player.getId()));
             response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
             response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+        }
 
+        else if(message.getAction() == Action.DRAW){
+            ArrayList<Card> startingCard = new ArrayList<>();
+            startingCard.add(game.placeStartingCard());
+            response.setCards(stringifyCards(startingCard));
         }
 
 
