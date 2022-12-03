@@ -281,7 +281,8 @@ function PlayRoom() {
 
                 <div className='turn'>
                     <label>Turn:</label>
-                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                    {game.turn > 0?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                    :<span>Waiting for all players to join...</span>}
                 </div>
 
                 <div className='game-direction'>
@@ -333,8 +334,9 @@ function PlayRoom() {
             </div>
 
             <ul className="play-order">
-                <label>Current card play order:</label>
-                {cardsToPlay.length > 0 && cardsToPlay.map( (card) =>(<span key={uuidv4()} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank + " " + card.suit + "&#8594")}}></span>))}
+                <label>Current card play order: </label>
+                {cardsToPlay.length > 0 ?cardsToPlay.map( (card,index) =>(<span key={uuidv4()} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank + " " + card.suit + (index < cardsToPlay.length-1? "&#8594":""))}}></span>))
+                :<span>Click on cards to see</span>}
             </ul>
          </div>
 

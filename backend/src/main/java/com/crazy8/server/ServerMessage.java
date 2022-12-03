@@ -22,7 +22,7 @@ public class ServerMessage {
         scores = "0,0,0,0";
         action = Action.JOIN;
         gameDirection = "Left";
-        turn = "1";
+        turn = "0";
         roundNum = "1";
         id = "-1";
         numPlayers = "0";
