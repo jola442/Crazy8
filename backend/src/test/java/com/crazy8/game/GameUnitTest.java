@@ -106,4 +106,35 @@ class GameUnitTest {
         player4.getHand().addAll(Arrays.asList(new Card(Rank.TWO, Suit.SPADES), new Card(Rank.THREE, Suit.DIAMONDS)));
         assertFalse(game.canPlayFromHand(player4));
     }
+
+    @Test
+    public void testUpdateTurn(){
+        //Player 1 reverses the game direction by playing an ace
+        game.setTurn(1);
+        game.setTopCard(new Card(Rank.FOUR, Suit.HEARTS));
+        player1.getHand().addAll(Arrays.asList(new Card(Rank.ACE, Suit.HEARTS)));
+        game.playCard(player1,new Card(Rank.ACE, Suit.HEARTS));
+        assertEquals(4, game.updateTurn());
+
+        //Player 4 plays and the next player should be player 3
+        player4.getHand().addAll(Arrays.asList(new Card(Rank.TWO, Suit.HEARTS)));
+        game.playCard(player4,new Card(Rank.TWO, Suit.HEARTS));
+        assertEquals(3, game.updateTurn());
+
+        //Player 3 plays and reverses the game direction by playing an ace
+        player3.getHand().addAll(Arrays.asList(new Card(Rank.ACE, Suit.HEARTS)));
+        game.playCard(player3,new Card(Rank.ACE, Suit.HEARTS));
+        assertEquals(4, game.updateTurn());
+
+        //Player 4 plays and the next player should be player 1
+        player4.getHand().addAll(Arrays.asList(new Card(Rank.TWO, Suit.HEARTS)));
+        game.playCard(player4,new Card(Rank.TWO, Suit.HEARTS));
+        assertEquals(1, game.updateTurn());
+
+        //Player 1 plays a queen and the next player should be player 3
+        player1.getHand().addAll(Arrays.asList(new Card(Rank.QUEEN, Suit.HEARTS)));
+        game.playCard(player1,new Card(Rank.QUEEN, Suit.HEARTS));
+        assertEquals(3, game.updateTurn());
+
+    }
 }
