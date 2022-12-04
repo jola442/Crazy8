@@ -85,6 +85,25 @@ class GameUnitTest {
         player2.getHand().add(new Card(Rank.TWO, Suit.CLUBS));
         cardPlayed = game.playCard(player2, new Card(Rank.FOUR, Suit.CLUBS));
         assertNull(cardPlayed);
+    }
 
+    @Test
+    public void canPlayFromHand(){
+        //The player's hand contains an 8
+        game.setTopCard(new Card(Rank.FOUR, Suit.HEARTS));
+        player1.getHand().addAll(Arrays.asList(new Card(Rank.EIGHT, Suit.CLUBS)));
+        assertTrue(game.canPlayFromHand(player1));
+
+        //The player's hand contains a card wih the same suit
+        player2.getHand().addAll(Arrays.asList(new Card(Rank.SIX, Suit.HEARTS), new Card(Rank.THREE, Suit.DIAMONDS)));
+        assertTrue(game.canPlayFromHand(player2));
+
+        //The player's hand contains a card with the same rank
+        player3.getHand().addAll(Arrays.asList(new Card(Rank.FOUR, Suit.CLUBS), new Card(Rank.THREE, Suit.DIAMONDS)));
+        assertTrue(game.canPlayFromHand(player3));
+
+        //The player's hand does not contain a card with the same rank or suit
+        player4.getHand().addAll(Arrays.asList(new Card(Rank.TWO, Suit.SPADES), new Card(Rank.THREE, Suit.DIAMONDS)));
+        assertFalse(game.canPlayFromHand(player4));
     }
 }
