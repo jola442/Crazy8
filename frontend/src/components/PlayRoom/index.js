@@ -385,8 +385,8 @@ function PlayRoom() {
 
 
             <div className='action-buttons'>
-                <button id='play-card-button' onClick={playCard}>Play Card(s)</button>
-                <button id='draw-card-button' onClick={drawCard}>Draw card</button>
+                <button id='play-card-button' disabled={game.turn!==user.id} onClick={playCard}>Play Card(s)</button>
+                <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button>
             </div>
 
         </div>

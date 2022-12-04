@@ -124,3 +124,7 @@ label{
     font-size: 1.75em;
     text-align: center;
 }
+
+button:disabled{
+    background-color: gray;
+}

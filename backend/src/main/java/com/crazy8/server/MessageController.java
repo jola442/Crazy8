@@ -99,6 +99,10 @@ public class MessageController {
         response.setMessage("Player " + (player.getId()) + " (" + player.getName() + ")" + " has joined." );
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
+        if(game.getPlayers().size() == 4){
+            game.setTurn(1);
+            response.setTurn(Integer.toString(game.getTurn()));
+        }
         return response;
     }
 
@@ -108,15 +112,18 @@ public class MessageController {
         response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
-        ArrayList<Card> startingCard = new ArrayList<>();
-        startingCard.add(game.placeStartingCard());
-        response.setCards(stringifyCards(startingCard));
-        response.setAction(Action.DRAW);
-
-        if(game.getPlayers().size() == 4){
-            System.out.println("Number of players is now 4");
-            game.setTurn(1);
+        ArrayList<Card> newTopCard = new ArrayList<>();
+        if(game.getTopCard() == null){
+            newTopCard.add(game.placeStartingCard());
         }
+
+        else{
+            newTopCard.add(game.getTopCard());
+        }
+
+        response.setAction(Action.DRAW);
+        response.setCards(stringifyCards(newTopCard));
+
 
         return response;
     }
