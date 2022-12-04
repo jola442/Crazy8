@@ -3,7 +3,8 @@ import com.crazy8.game.Card;
 import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
-import com.crazy8.game.Defs;
+import static com.crazy8.game.Defs.NUM_STARTING_CARDS;
+import com.crazy8.game.Defs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -12,6 +13,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 @Controller
 public class MessageController {
@@ -38,6 +41,46 @@ public class MessageController {
 
         }
         return cardsString;
+    }
+
+    public Card decodeCard(String cardFromClient){
+        int cardRankInt = 0;
+        Rank cardRank = null;
+        Suit cardSuit = null;
+        int suitIndex = 0;
+        if(cardFromClient.length() > 2){
+            String rankString = "";
+            rankString += cardFromClient.charAt(0);
+            rankString += cardFromClient.charAt(1);
+            cardRankInt = Integer.parseInt(rankString);
+            cardRank = Rank.values()[cardRankInt-1];
+            suitIndex = 2;
+        }
+
+        else{
+            cardRankInt = Character.getNumericValue(cardFromClient.charAt(0));
+            cardRank = Rank.values()[cardRankInt-1];
+            suitIndex = 1;
+        }
+        switch (cardFromClient.charAt(suitIndex)){
+            case 'H':
+                cardSuit = Suit.HEARTS;
+                break;
+            case 'S':
+                cardSuit = Suit.SPADES;
+                break;
+            case 'D':
+                cardSuit = Suit.DIAMONDS;
+                break;
+            case 'C':
+                cardSuit = Suit.CLUBS;
+                break;
+        }
+        System.out.println("This should be a queen:" + Rank.values()[11]);
+        System.out.println("Card rank: " + cardRank);
+        System.out.println("Creating this card:" + cardRank.toString() + cardSuit.toString());
+        return new Card(cardRank, cardSuit);
+
     }
 
     private ServerMessage handleUserJoining(@Payload ClientMessage message){
@@ -102,7 +145,7 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setAction(Action.DRAW);
-        for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
+        for(int i = 0; i < NUM_STARTING_CARDS; ++i){
             game.drawCard(player);
         }
 

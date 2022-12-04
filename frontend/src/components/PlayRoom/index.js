@@ -71,16 +71,6 @@ function PlayRoom() {
       useEffect(() => {
         sessionStorage.setItem(HAND_STORAGE_KEY, JSON.stringify(hand));
       }, [hand])
-
-
-      // useEffect( () => {
-      //   console.log("Current Announcements", announcements);
-      // }, [announcements])
-
-    //   useEffect( () => {
-    //     console.log("Current User", user);
-    //   }, [user])
-
       
       useEffect( () => {
         console.log("Current hand", hand);
@@ -116,7 +106,44 @@ function PlayRoom() {
     }
 
     function getSelectedCard(){
-        return hand.filter( card => card.selected)[0];
+        let selectedCard = hand.filter( card => card.selected);
+        if(selectedCard.length > 0){
+            return selectedCard[0];
+        }
+
+        else{
+            return "";
+        }
+       
+    }
+
+    function encodeCard(card){
+        let rank = ""
+    
+        switch(card.rank){
+            case("ace"):
+                rank = "1"
+                break;
+            case("jack"):
+                rank = "11"
+                break;
+            case("queen"):
+                rank = "12"
+                break;
+            case("king"):
+                rank = "13"
+                break;
+            default:
+                rank = card.rank;
+        }
+        if(card){
+            return rank + card.suit[0].toUpperCase();
+        }
+
+        else{
+            return "";
+        }
+    
     }
 
   // Networking functions

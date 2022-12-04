@@ -5,14 +5,12 @@ public class ClientMessage {
     private String id;
     private String name;
     private Action action;
-    private String cards;
     private String message;
 
     public ClientMessage(){
         name = "";
         id = "0";
         action = Action.JOIN;
-        cards = "";
         message = "";
     }
 
@@ -38,14 +36,6 @@ public class ClientMessage {
 
     public void setAction(Action action) {
         this.action = action;
-    }
-
-    public String getCards() {
-        return cards;
-    }
-
-    public void setCards(String cards) {
-        this.cards = cards;
     }
 
     public void setMessage(String message) {
