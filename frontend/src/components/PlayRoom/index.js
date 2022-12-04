@@ -237,19 +237,37 @@ function PlayRoom() {
     const onPrivateMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
         console.log("Received a private message!",payloadData);
+        let newCards;
 
         switch(payloadData.action){
             case "JOIN":
                 setUser( (oldUser) => ({...oldUser, ...{id:payloadData.id}}));
                 break;
             case "DRAW":
-                let newCards = JSON.parse(payloadData.cards);
+                newCards = JSON.parse(payloadData.cards);
                 newCards.forEach(card => {
+                    card.suit = card.suit.toLowerCase();
+                    card.rank = card.rank.toLowerCase();
                     card.id = uuidv4();
                     card.selected = false;
                     card.front = true;    
                 })
                 setHand( (oldHand) => ([...oldHand, ...newCards]));
+                break;
+            case "PLAY":
+                if(payloadData.message.toLowerCase() === "no"){
+                    break;
+                }
+                newCards = JSON.parse(payloadData.cards);
+                newCards.forEach(card => {
+                    card.suit = card.suit.toLowerCase();
+                    card.rank = card.rank.toLowerCase();
+                    card.id = uuidv4();
+                    card.selected = false;
+                    card.front = true;    
+                })
+                setHand(newCards);
+                requestTopCard();
                 break;
             default:
                 break;
@@ -280,6 +298,18 @@ function PlayRoom() {
           
         }
     }
+
+    const playCard = () =>{
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: encodeCard(getSelectedCard()),
+                action: 'PLAY',
+            };
+            stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+        }
+    }
+
 
 
 
@@ -355,7 +385,7 @@ function PlayRoom() {
 
 
             <div className='action-buttons'>
-                <button id='play-card-button' onClick={sendPublicMessage}>Play Card(s)</button>
+                <button id='play-card-button' onClick={playCard}>Play Card(s)</button>
                 <button id='draw-card-button' onClick={drawCard}>Draw card</button>
             </div>
 

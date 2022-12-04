@@ -59,6 +59,14 @@ public class Game {
         this.topCard = topCard;
     }
 
+    public int getTurn() {
+        return turn;
+    }
+
+    public void setTurn(int turn) {
+        this.turn = turn;
+    }
+
     public void updateCardCount(Card card){
         if(card.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;

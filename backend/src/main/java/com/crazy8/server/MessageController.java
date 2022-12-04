@@ -28,7 +28,7 @@ public class MessageController {
         String cardsString = "[";
         for(int i = 0; i < cards.size(); ++i){
             Card card = cards.get(i);
-            String cardSuit = card.getSuit().toString().toLowerCase();
+            String cardSuit = card.getSuit().toString();
             String cardRank = card.getRank().toString();
 
             if(i < cards.size()-1){
@@ -85,6 +85,8 @@ public class MessageController {
 
     private ServerMessage handleUserJoining(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         //Creating the player model
@@ -102,11 +104,20 @@ public class MessageController {
 
     private ServerMessage handleSendingTopCard(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+
         ArrayList<Card> startingCard = new ArrayList<>();
         startingCard.add(game.placeStartingCard());
         response.setCards(stringifyCards(startingCard));
         response.setAction(Action.DRAW);
+
+        if(game.getPlayers().size() == 4){
+            System.out.println("Number of players is now 4");
+            game.setTurn(1);
+        }
+
         return response;
     }
 
@@ -129,6 +140,7 @@ public class MessageController {
     public ServerMessage handleSendingUserID(@Payload ClientMessage message, Player player){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
         response.setAction(Action.JOIN);
         if(player == null){
             response.setId(Integer.toString(game.getPlayers().size()+1));
@@ -141,9 +153,10 @@ public class MessageController {
         return response;
     }
 
-    private  ServerMessage  handleSendingStartingCards(@Payload ClientMessage message, Player player) {
+    private  ServerMessage handleSendingStartingCards(@Payload ClientMessage message, Player player) {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
         response.setAction(Action.DRAW);
         for(int i = 0; i < NUM_STARTING_CARDS; ++i){
             game.drawCard(player);
@@ -157,6 +170,7 @@ public class MessageController {
     private ServerMessage handleSendingDrawnCard(@Payload ClientMessage message, Player player) {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
         response.setAction(Action.DRAW);
         Card drawnCard = game.drawCard(player);
         if(drawnCard != null){
@@ -170,6 +184,30 @@ public class MessageController {
         return response;
     }
 
+    private ServerMessage handlePlayingACard(@Payload ClientMessage message, Player player){
+        ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
+        response.setAction(Action.PLAY);
+        System.out.println(message);
+        System.out.println("The card i'm getting from client: "+message.getMessage());
+
+        if(message.getMessage().equalsIgnoreCase("")){
+            response.setMessage("no");
+        }
+
+        else{
+            Card card = decodeCard(message.getMessage());
+            if(game.playCard(player, card) == null){
+                response.setMessage("no");
+            }
+            else{
+                response.setMessage("yes");
+                response.setCards(stringifyCards(player.getHand()));
+            }
+        }
+        return response;
+    }
 
     @MessageMapping("/private-message")
     public ServerMessage receivePrivateMessage(@Payload ClientMessage message){
@@ -186,7 +224,7 @@ public class MessageController {
             response = handleSendingUserID(message,player);
         }
 
-        if(message.getAction() == Action.DRAW && player != null){
+        else if(message.getAction() == Action.DRAW && player != null){
             if(message.getMessage().equalsIgnoreCase("starting cards")){
                 response = handleSendingStartingCards(message, player);
             }
@@ -195,7 +233,10 @@ public class MessageController {
                 response = handleSendingDrawnCard(message, player);
             }
 
+        }
 
+        else if(message.getAction() == Action.PLAY){
+            response = handlePlayingACard(message, player);
         }
 
         System.out.println(response.toString());
@@ -205,3 +246,4 @@ public class MessageController {
     }
 
 }
+
