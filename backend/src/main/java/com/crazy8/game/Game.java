@@ -133,4 +133,13 @@ public class Game {
         return null;
     }
 
+    public boolean canPlayFromHand(Player player){
+        for(Card card:player.getHand()){
+            if(topCard.getRank() == card.getRank() || topCard.getSuit() == card.getSuit() || card.getRank() == Rank.EIGHT){
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
