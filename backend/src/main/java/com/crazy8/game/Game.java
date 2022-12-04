@@ -14,6 +14,7 @@ public class Game {
     private int numClubsCards;
     List<Player> players;
     private Card topCard;
+    private int turn;
 
     public Game(){
         deck = new Deck();
@@ -29,7 +30,6 @@ public class Game {
     public int getNumCards() {
         return numCards;
     }
-
 
     public int getNumSpadesCards() {
         return numSpadesCards;
@@ -53,6 +53,10 @@ public class Game {
 
     public Card getTopCard() {
         return topCard;
+    }
+
+    public void setTopCard(Card topCard) {
+        this.topCard = topCard;
     }
 
     public void updateCardCount(Card card){
@@ -112,6 +116,21 @@ public class Game {
 
         placeStartingCard();
         return true;
+    }
+
+    public Card playCard(Player player, Card card){
+        if(!player.getHand().contains(card)){
+            return null;
+        }
+
+        System.out.println("I got here with this card: " + card);
+        if(topCard.getRank() == card.getRank() || topCard.getSuit() == card.getSuit() || card.getRank() == Rank.EIGHT){
+            setTopCard(card);
+            player.getHand().remove(card);
+            return card;
+        }
+
+        return null;
     }
 
 }
