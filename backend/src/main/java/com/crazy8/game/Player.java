@@ -8,11 +8,14 @@ public class Player {
     private int score;
     private int id;
     private List<Card> hand;
+    private int numCardDraws;
 
     public Player(String name) {
         this.name = name;
         score = 0;
         hand = new ArrayList<>();
+        id = -1;
+        numCardDraws = 0;
     }
 
     public Player(){
@@ -20,6 +23,7 @@ public class Player {
         score = 0;
         id = -1;
         hand = new ArrayList<>();
+        numCardDraws = 0;
     }
 
     public String getName() {
@@ -52,5 +56,13 @@ public class Player {
 
     public void setHand(List<Card> hand) {
         this.hand = hand;
+    }
+
+    public int getNumCardDraws() {
+        return numCardDraws;
+    }
+
+    public void setNumCardDraws(int numCardDraws) {
+        this.numCardDraws = numCardDraws;
     }
 }

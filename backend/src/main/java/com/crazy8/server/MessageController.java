@@ -4,6 +4,7 @@ import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
 import static com.crazy8.game.Defs.NUM_STARTING_CARDS;
+import static com.crazy8.game.Defs.MAX_NUM_DRAWS_PER_TURN;
 import com.crazy8.game.Defs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -205,12 +206,62 @@ public class MessageController {
 
         else{
             Card card = decodeCard(message.getMessage());
+            //If the selected card cannot be played
             if(game.playCard(player, card) == null){
-                response.setMessage("no");
+              String msg = "You cannot play this card (" + card.getRank() + " " + card.getSuit() + ")\n";
+              boolean hasDrawn = false;
+
+              //Draw up to 3 cards and play
+               for(int i = 0; i < MAX_NUM_DRAWS_PER_TURN; ++i){
+                   //If the player cannot play any card from their hand
+                   if(!game.canPlayFromHand(player)){
+                       Card newCard = game.drawCard(player);
+                       //Check if the player successfully draws a card
+                       if(newCard != null){
+                           msg += "You cannot play any other card from your hand \n So you draw a " + newCard.getRank().toString() + " " + newCard.getSuit() + "\n";
+                           hasDrawn = true;
+                       }
+
+                       else{
+                           msg += "There are no cards left to draw\n";
+                       }
+
+                   }
+
+                   //If the player can play a card from their hand
+                   else{
+                       //If they can play because they drew a card, they must play the card
+                       if(hasDrawn){
+                           int handSize = player.getHand().size();
+                           Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
+                           if(cardPlayed!= null){
+                               msg += "You play a " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
+                               game.setTopCard(cardPlayed);
+                               break;
+                           }
+                       }
+
+                       else{
+                           msg += "You have a card you can play, pick that instead\n";
+                           //Otherwise they are free to play a valid card if they already had it
+                           break;
+                       }
+
+                   }
+               }
+                response.setMessage(msg);
+
             }
             else{
+                game.setTopCard(card);
                 response.setMessage("yes");
-                response.setCards(stringifyCards(player.getHand()));
+            }
+
+            response.setCards(stringifyCards(player.getHand()));
+
+            if(game.getTopCard().getRank() != Rank.ACE && game.getTopCard().getRank() != Rank.QUEEN){
+                game.setTurn((game.getTurn()+1)%5);
+                response.setTurn(Integer.toString(game.getTurn()));
             }
         }
         return response;

@@ -100,7 +100,7 @@ public class Game {
         if(deck.getDeck().isEmpty()){
             return null;
         }
-        Card newTopCard = deck.getDeck().get(0);
+        Card newTopCard = deck.getDeck().remove(0);
         while(newTopCard.getRank() == Rank.EIGHT){
             Collections.shuffle(deck.getDeck());
         }

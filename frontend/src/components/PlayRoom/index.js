@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState} from 'react'
 import DOMPurify from 'dompurify';
 import Cards from '../Cards';
 import Card from "../Card"
@@ -76,6 +76,10 @@ function PlayRoom() {
         console.log("Current hand", hand);
       }, [hand])
 
+      useEffect( () => {
+        console.log("Current announcements", announcements);
+      }, [announcements])
+
     
     const handleUsername=(event)=>{
         const {value}=event.target;
@@ -87,15 +91,15 @@ function PlayRoom() {
         const clickedCard = newHand.find( card => card.id === id);
         const selectedCards = newHand.filter( card => card.selected);
         //if there are no selected cards
-        if(selectedCards.length == 0){
+        if(selectedCards.length === 0){
             if(clickedCard){
                 clickedCard.selected = !clickedCard.selected;
                 setHand(newHand);
             }
         }
 
-        else if(selectedCards.length == 1){
-            if(clickedCard.id == selectedCards[0].id){
+        else if(selectedCards.length === 1){
+            if(clickedCard.id === selectedCards[0].id){
                 clickedCard.selected = !clickedCard.selected;
                 setHand(newHand);
             }
@@ -210,14 +214,14 @@ function PlayRoom() {
         }
     }
 
-    const onPublicMessageReceived = (payload) => {
+    const onPublicMessageReceived = async(payload) => {
         let payloadData = JSON.parse(payload.body);
         switch(payloadData.action){
             case "JOIN":
                 setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 if(payloadData.numPlayers === "4"){
-                    requestStartingCards();
+                    await requestStartingCards();
                     requestTopCard();
                 }
                 break;
@@ -258,6 +262,16 @@ function PlayRoom() {
                 if(payloadData.message.toLowerCase() === "no"){
                     break;
                 }
+
+                else if(payloadData.message.toLowerCase() !== "yes"){
+                    let newAnnouncements = payloadData.message.split("\n");
+                    console.log(newAnnouncements);
+                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                    console.log("After",newAnnouncements)
+                    setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]))
+                }
+
+
                 newCards = JSON.parse(payloadData.cards);
                 newCards.forEach(card => {
                     card.suit = card.suit.toLowerCase();
@@ -275,17 +289,17 @@ function PlayRoom() {
     
     }
 
-    const sendPublicMessage = ()=>{
-        if(stompClient){
-            let messageToSend = {
-                name: user.name,
-                message: user.message,
-                action:""
-            };
-            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+    // const sendPublicMessage = ()=>{
+    //     if(stompClient){
+    //         let messageToSend = {
+    //             name: user.name,
+    //             message: user.message,
+    //             action:""
+    //         };
+    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
           
-        }
-    }
+    //     }
+    // }
 
     const drawCard = ()=>{
         if(stompClient){
@@ -378,9 +392,16 @@ function PlayRoom() {
         <div className='info-center'>
             <h2>Announcements</h2>
             <div className='announcements'>
+                <ul>
                 {announcements.length > 0 && announcements.map( announcement =>(
-                  <p className="annoucement" key = {announcement.id} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(announcement.message)}}/>
+                    <li key={announcement.id} className="annoucement">
+                        <p dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(announcement.message)}}/>
+                    </li>
                 ))}
+             
+            
+                </ul>
+
             </div>
 
 
@@ -402,7 +423,7 @@ function PlayRoom() {
 
             <ul className="selected-card">
                 <label>Selected Card: </label>
-                {getSelectedCard()?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(getSelectedCard().rank + " " + getSelectedCard().suit)}}></span>
+                {getSelectedCard()?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(getSelectedCard().rank.toUpperCase() + " " + getSelectedCard().suit.toUpperCase())}}></span>
                 :<span>Click on a card to see</span>}
             </ul>
          </div>
