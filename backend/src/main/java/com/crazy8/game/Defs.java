@@ -54,6 +54,11 @@ public class Defs {
         DIAMONDS;
     }
 
+    public enum Direction{
+        LEFT,
+        RIGHT
+    }
+
     public static final int NUM_CARDS = 52;
     public static final int NUM_STARTING_CARDS = 5;
     public static final int MAX_NUM_DRAWS_PER_TURN = 3;

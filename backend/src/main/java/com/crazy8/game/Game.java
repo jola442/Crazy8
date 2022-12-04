@@ -15,6 +15,7 @@ public class Game {
     List<Player> players;
     private Card topCard;
     private int turn;
+    private Direction direction;
 
     public Game(){
         deck = new Deck();
@@ -25,6 +26,7 @@ public class Game {
         numHeartsCards = Rank.values().length;
         players = new ArrayList<>();
         topCard = null;
+        direction = Direction.LEFT;
     }
 
     public int getNumCards() {
@@ -126,18 +128,50 @@ public class Game {
         return true;
     }
 
+    public int updateTurn(){
+        System.out.println(topCard);
+        if(topCard.getRank() == Rank.QUEEN){
+            if(direction == Direction.LEFT){
+                turn += 1;
+            }
+
+            else{
+                turn -=1;
+            }
+        }
+
+        else if(topCard.getRank() == Rank.ACE){
+            if(direction == Direction.LEFT){
+                direction = Direction.RIGHT;
+            }
+
+            else{
+                direction = Direction.LEFT;
+            }
+        }
+
+        if(direction == Direction.LEFT){
+            turn += 1;
+            turn = turn > 4? 1:turn;
+        }
+
+        else{
+            turn -= 1;
+            turn = turn < 1?4:turn;
+        }
+        return turn;
+    }
+
     public Card playCard(Player player, Card card){
         if(!player.getHand().contains(card)){
             return null;
         }
 
-        System.out.println("I got here with this card: " + card);
         if(topCard.getRank() == card.getRank() || topCard.getSuit() == card.getSuit() || card.getRank() == Rank.EIGHT){
             setTopCard(card);
             player.getHand().remove(card);
             return card;
         }
-
         return null;
     }
 
