@@ -32,7 +32,7 @@ ul{
 }
   
 .game-stats{
-    width: max-content;
+    width: 10em;
     font-size: 1.75em;
 }
   
@@ -120,7 +120,7 @@ label{
     color:blue;
 }
 
-.play-order{
+.selected-card{
     font-size: 1.75em;
     text-align: center;
 }

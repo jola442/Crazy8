@@ -11,6 +11,7 @@ let stompClient = null;
 const GAME_SESSION_STORAGE_KEY = "crazy8.game"
 const PLAYER_SESSION_STORAGE_KEY = "crazy8.player"
 const ANNOUNCEMENTS_STORAGE_KEY = "crazy8.announcement"
+const HAND_STORAGE_KEY = "crazy8.hand"
 
 function PlayRoom() {
     const [user, setUser] = useState({
@@ -28,7 +29,6 @@ function PlayRoom() {
         scores:["0","0","0","0"]
     })
 
-    const [cardsToPlay, setCardsToPlay] = useState([]);
     const [announcements, setAnnouncements] = useState([]);
 
     useEffect(() => {
@@ -36,6 +36,7 @@ function PlayRoom() {
       const storedGame = JSON.parse(sessionStorage.getItem(GAME_SESSION_STORAGE_KEY));
       const storedPlayer = JSON.parse(sessionStorage.getItem(PLAYER_SESSION_STORAGE_KEY));
       const storedAnnouncements = JSON.parse(sessionStorage.getItem(ANNOUNCEMENTS_STORAGE_KEY));
+      const storedHand = JSON.parse(sessionStorage.getItem(HAND_STORAGE_KEY));
     
       if(storedGame){
         setGame(storedGame)
@@ -47,6 +48,10 @@ function PlayRoom() {
 
       if(storedAnnouncements){
         setAnnouncements(storedAnnouncements);
+      }
+
+      if(storedHand){
+        setHand(storedHand)
       }
 
     }, [])
@@ -63,6 +68,10 @@ function PlayRoom() {
         sessionStorage.setItem(ANNOUNCEMENTS_STORAGE_KEY, JSON.stringify(announcements));
       }, [announcements])
 
+      useEffect(() => {
+        sessionStorage.setItem(HAND_STORAGE_KEY, JSON.stringify(hand));
+      }, [hand])
+
 
       // useEffect( () => {
       //   console.log("Current Announcements", announcements);
@@ -77,28 +86,38 @@ function PlayRoom() {
         console.log("Current hand", hand);
       }, [hand])
 
-      
-    function handleCardToPlay(card){
-      let cardIndex = cardsToPlay.indexOf(card);
-      let newCardsToPlay;
-      if(cardIndex === -1){
-          newCardsToPlay = [...cardsToPlay]
-          newCardsToPlay.push(card)
-          setCardsToPlay(newCardsToPlay);
-      }
+    
+    const handleUsername=(event)=>{
+        const {value}=event.target;
+        setUser({...user,"name": value});
+    }
 
-      else{
-          console.log(cardIndex);
-          newCardsToPlay = [...cardsToPlay]
-          newCardsToPlay.splice(cardIndex, 1);
-          setCardsToPlay(newCardsToPlay);
-      }
-  }
+    function toggleSelectedCard(id){
+        const newHand = [...hand];
+        const clickedCard = newHand.find( card => card.id === id);
+        const selectedCards = newHand.filter( card => card.selected);
+        //if there are no selected cards
+        if(selectedCards.length == 0){
+            if(clickedCard){
+                clickedCard.selected = !clickedCard.selected;
+                setHand(newHand);
+            }
+        }
 
-  const handleUsername=(event)=>{
-    const {value}=event.target;
-    setUser({...user,"name": value});
-}
+        else if(selectedCards.length == 1){
+            if(clickedCard.id == selectedCards[0].id){
+                clickedCard.selected = !clickedCard.selected;
+                setHand(newHand);
+            }
+
+        }
+
+
+    }
+
+    function getSelectedCard(){
+        return hand.filter( card => card.selected)[0];
+    }
 
   // Networking functions
     const registerUser = () => {
@@ -235,16 +254,7 @@ function PlayRoom() {
         }
     }
 
-    function toggleSelectedCard(id){
-        const newHand = [...hand];
-        const selectedCard = newHand.find( card => card.id === id);
-        if(selectedCard){
-            selectedCard.selected = !selectedCard.selected;
-            setHand(newHand);
-            handleCardToPlay(selectedCard);
-        }
 
-    }
 
 
 
@@ -333,10 +343,10 @@ function PlayRoom() {
                 <Cards cardsList={[...hand]} toggleSelectedCard={toggleSelectedCard}/>
             </div>
 
-            <ul className="play-order">
-                <label>Current card play order: </label>
-                {cardsToPlay.length > 0 ?cardsToPlay.map( (card,index) =>(<span key={uuidv4()} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank + " " + card.suit + (index < cardsToPlay.length-1? "&#8594":""))}}></span>))
-                :<span>Click on cards to see</span>}
+            <ul className="selected-card">
+                <label>Selected Card: </label>
+                {getSelectedCard()?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(getSelectedCard().rank + " " + getSelectedCard().suit)}}></span>
+                :<span>Click on a card to see</span>}
             </ul>
          </div>
 
