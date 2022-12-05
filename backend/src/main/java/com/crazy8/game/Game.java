@@ -190,4 +190,14 @@ public class Game {
         return false;
     }
 
+    public boolean canPlayFromHand(Player player, int numCards){
+        int canBePlayed = 0;
+        for(Card card:player.getHand()){
+            if(topCard.getRank() == card.getRank() || topCard.getSuit() == card.getSuit() || card.getRank() == Rank.EIGHT){
+                canBePlayed++;
+            }
+        }
+
+        return canBePlayed == numCards;
+    }
 }
