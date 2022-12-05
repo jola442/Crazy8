@@ -226,6 +226,18 @@ function PlayRoom() {
         }
     }
 
+    function requestTurn(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: "turn",
+                action:"UPDATE"
+            };
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+        }
+    }
+
     const onPublicMessageReceived = async(payload) => {
         let payloadData = JSON.parse(payload.body);
         switch(payloadData.action){
@@ -247,6 +259,11 @@ function PlayRoom() {
                 newTopCard.selected = false;
                 newTopCard.front = true;    
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
+                break;
+            case "UPDATE":
+                if(payloadData.message.toLowerCase() === "turn"){
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                }
                 break;
             default:
                 break;
@@ -310,7 +327,7 @@ function PlayRoom() {
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         setAnnouncements(newAnnouncements);
                         await setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
-                        
+                        requestTurn();
                     }
                
                 }

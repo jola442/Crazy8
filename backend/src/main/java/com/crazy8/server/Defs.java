@@ -5,6 +5,7 @@ public class Defs {
         JOIN,
         PLAY,
         DRAW,
+        UPDATE,
         LEAVE
     }
 

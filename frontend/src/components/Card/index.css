@@ -11,6 +11,6 @@
 }
 
 .card.active img{
-    outline-color:black;
+    outline-color:red;
     outline-style: solid;
 }

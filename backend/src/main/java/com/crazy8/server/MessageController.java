@@ -196,6 +196,18 @@ public class MessageController {
 
         }
 
+        else if(message.getAction() == Action.UPDATE){
+            if(message.getMessage().equalsIgnoreCase("turn")){
+                response.setMessage(message.getMessage());
+                response.setTurn(Integer.toString(game.getTurn()));
+                response.setAction(Action.UPDATE);
+            }
+
+//            else if(message.getMessage().equalsIgnoreCase("top card")){
+//                response.setCards(stringifyCards(new ArrayList<>(game.getTopCard())));
+//            }
+        }
+
         return response;
     }
 
