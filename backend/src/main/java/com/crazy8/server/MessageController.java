@@ -117,36 +117,66 @@ public class MessageController {
         response.setDirection(game.getDirection());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
+
         if(game.getTopCard() != null){
+            String msg = "";
             if(game.getTopCard().getRank() == Rank.ACE){
-                String msg = "The game direction was changed from ";
                 if(game.getDirection() == Direction.LEFT){
-                    msg += Direction.RIGHT + " to " + Direction.LEFT + " by Player " + "WILL IMPLEMENT LATER"+ " playing an ACE";
+                    int playerNumber = game.getTurn() == 1?4:game.getTurn()-1;
+                    msg += "Player " + playerNumber + " changed the direction from " + Direction.RIGHT + " to " + Direction.LEFT + " by playing an ACE";
                 }
 
                 else{
-                    msg += Direction.LEFT + " to " +Direction.RIGHT + " by Player " + "WILL IMPLEMENT LATER" + " playing an ACE";
+                    int playerNumber = game.getTurn() == 4?1:game.getTurn()+1;
+                    msg += "Player " + playerNumber + " changed the direction from " + Direction.LEFT + " to " + Direction.RIGHT + " by playing an ACE";
                 }
-                response.setMessage(msg);
 
             }
 
             else if(game.getTopCard().getRank() == Rank.QUEEN){
-                String msg = "";
+                int firstPlayer = 0;
+                int secondPlayer = 0;
+
                 if(game.getDirection() == Direction.LEFT){
-//                    int secondPlayerNum = Math.max(game.getTurn() - 1, 1);
-                    msg += "Player IMPLEMENT LATER " + "played a QUEEN causing Player IMPLEMENT LATER" + " to miss their turn";
+                    if(game.getTurn() == 4 || game.getTurn() == 3){
+                        firstPlayer = game.getTurn()-2;
+                        secondPlayer = game.getTurn()-1;
+                    }
+
+                    else if(game.getTurn() == 2){
+                        firstPlayer = game.getTurn()+2;
+                        secondPlayer = game.getTurn()-1;
+                    }
+
+                    else{
+                        firstPlayer = game.getTurn()+2;
+                        secondPlayer = game.getTurn()+3;
+                    }
                 }
 
                 else{
-//                    int secondPlayerNum = Math.max(game.getTurn()+ 1, 1);
-                    msg += "Player IMPLEMENT LATER " + "played a QUEEN causing Player IMPLEMENT LATER" + " to miss their turn";
+                    if(game.getTurn() == 1 || game.getTurn() == 2){
+                        firstPlayer = game.getTurn()+2;
+                        secondPlayer = game.getTurn()+1;
+                    }
+
+                    else if(game.getTurn() == 3){
+                        firstPlayer = game.getTurn()-2;
+                        secondPlayer = game.getTurn()+1;
+                    }
+
+                    else{
+                        firstPlayer = game.getTurn()-2;
+                        secondPlayer = game.getTurn()-3;
+                    }
+
                 }
-                response.setMessage(msg);
+                msg += "Player " + firstPlayer + " played a QUEEN causing Player " +  secondPlayer + " to miss their turn";
+
             }
+            response.setMessage(msg);
             newTopCard.add(game.getTopCard());
         }
-
 
         response.setCards(stringifyCards(newTopCard));
 
@@ -303,7 +333,6 @@ public class MessageController {
                            Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
                            if(cardPlayed!= null){
                                msg += "You play a(n) " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
-                               game.setTopCard(cardPlayed);
                                game.updateTurn();
                                break;
                            }
@@ -320,8 +349,15 @@ public class MessageController {
 
                 System.out.println("Num drawn cards: "+numDrawnCards);
 
-               //If after 3 draws they still can't play, it is someone else's turn
+               //If after 3 draws, the player can play a card, play it. Update the turn regardless
                if(numDrawnCards == 3){
+                   if(game.canPlayFromHand(player)){
+                       int handSize = player.getHand().size();
+                       Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
+                       if(cardPlayed != null){
+                           msg += "You play a(n) " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
+                       }
+                   }
                    System.out.println("I am updating the turn when a player draws 3 cards");
                    game.updateTurn();
                }
