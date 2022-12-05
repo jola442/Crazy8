@@ -17,8 +17,6 @@ function PlayRoom() {
     const [user, setUser] = useState({
         name:"",
         connected: false,
-        score:"0",
-        id:"-1",
     })
 
     const [hand, setHand] = useState([])
@@ -72,13 +70,18 @@ function PlayRoom() {
         sessionStorage.setItem(HAND_STORAGE_KEY, JSON.stringify(hand));
       }, [hand])
       
+    //   useEffect( () => {
+    //     console.log("Current user", user);
+    //   }, [user])
+
+
       useEffect( () => {
         console.log("Current hand", hand);
       }, [hand])
 
-      useEffect( () => {
-        console.log("Current announcements", announcements);
-      }, [announcements])
+    //   useEffect( () => {
+    //     console.log("Current announcements", announcements);
+    //   }, [announcements])
 
     
     const handleUsername=(event)=>{
@@ -157,36 +160,35 @@ function PlayRoom() {
         stompClient.connect({}, onConnected, onError);
     }
 
-    const onConnected = () =>{
+    const onConnected = async() =>{
         // saveUsername();
         setUser( (oldUser) => ({...oldUser, ...{connected:true}}));
-        stompClient.subscribe("/playroom/public", onPublicMessageReceived);
+        await stompClient.subscribe("/playroom/public", onPublicMessageReceived);
         console.log("current username:", user.name);
-        stompClient.subscribe('/player/'+user.name+'/private', onPrivateMessageReceived);
+        await stompClient.subscribe('/player/'+user.name+'/private', onPrivateMessageReceived);
         userJoins();
     }
 
     const onError = (error) => {
         console.log(error);
     }
-    const userJoins = () =>{
+    const userJoins = async() =>{
         let message = {
             name: user.name,
-            message: user.message,
             action: 'JOIN'
         };
-        stompClient.send("/app/message", {}, JSON.stringify(message));
+        await stompClient.send("/app/message", {}, JSON.stringify(message));
         requestID();
     }
 
-    function requestID(){
+    async function requestID(){
         if(stompClient){
             let messageToSend = {
                 name: user.name,
                 message: "",
                 action: 'JOIN',
             };
-            stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+            await stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
         }
     }
 
@@ -195,6 +197,18 @@ function PlayRoom() {
             let messageToSend = {
                 name: user.name,
                 message: "starting cards",
+                action: 'DRAW',
+            };
+            stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
+          
+        }
+    }
+
+    function sendTwoCardMessage(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: "2 card",
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
@@ -214,48 +228,12 @@ function PlayRoom() {
         }
     }
 
-    // function requestStartingTopCard(){
-    //     if(stompClient){
-    //         let messageToSend = {
-    //             name: user.name,
-    //             message: "starting top card",
-    //             action:"DRAW"
-    //         };
-    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
-    //     }
-    // }
-
-    // function requestPublicInformation("top card"){
-    //     if(stompClient){
-    //         let messageToSend = {
-    //             name: user.name,
-    //             message: "top card",
-    //             action:"DRAW"
-    //         };
-    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
-    //     }
-    // }
-
-    // function requestTurn(){
-    //     if(stompClient){
-    //         let messageToSend = {
-    //             name: user.name,
-    //             message: "turn",
-    //             action:"UPDATE"
-    //         };
-    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
-    //     }
-    // }
-
     const onPublicMessageReceived = async(payload) => {
         let payloadData = JSON.parse(payload.body);
         switch(payloadData.action){
             case "JOIN":
                 setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
-                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
                 if(payloadData.numPlayers === "4"){
                     await requestStartingCards();
                     await requestPublicInformation("starting top card");
@@ -270,11 +248,11 @@ function PlayRoom() {
                 // newTopCard.id = uuidv4();
                 // newTopCard.selected = false;
                 // newTopCard.front = true;    
-                // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
+                // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
                 // break;
             case "UPDATE":
                 if(payloadData.message.toLowerCase() === "turn"){
-                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
                 }
 
                 else{
@@ -283,7 +261,7 @@ function PlayRoom() {
                     newTopCard.id = uuidv4();
                     newTopCard.selected = false;
                     newTopCard.front = true;    
-                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
                     
 
                     //The server sends a message unless the top card is a starting top card
@@ -294,8 +272,15 @@ function PlayRoom() {
 
                     else{
                         console.log("Not equal to starting card or '' DID NOT run with this Message:",payloadData.message);
-                    }
-           
+       
+                        if(payloadData.currentPlayerTurn === user.name){
+                            console.log("New top card rank: ", newTopCard.rank);
+                            if(newTopCard.rank === "2"){
+                                console.log("Sent the two card message");
+                                sendTwoCardMessage();
+                            }
+                        }
+                    }   
                 }
 
                 break;
@@ -311,9 +296,11 @@ function PlayRoom() {
 
         switch(payloadData.action){
             case "JOIN":
-                setUser( (oldUser) => ({...oldUser, ...{id:payloadData.id}}));
+                console.log("setting user ID in join....")
+                setUser( (oldUser) => ({...oldUser, ...{connected: true, id:payloadData.id}}));
+            
                 break;
-            case "DRAW":
+            case "DRAW": 
                 newCards = JSON.parse(payloadData.cards);
                 newCards.forEach(card => {
                     card.suit = card.suit.toLowerCase();
@@ -322,9 +309,22 @@ function PlayRoom() {
                     card.selected = false;
                     card.front = true;    
                 })
-                setHand( (oldHand) => ([...oldHand, ...newCards]));
+                if(payloadData.message.toLowerCase().includes("you can't play up to")){
+                    setHand( () => (newCards));
+                    let newAnnouncements = payloadData.message.split("\n");
+                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                    setAnnouncements(newAnnouncements);
+                }
+
+                else{
+                    setHand( (oldHand) => ([...oldHand, ...newCards]));
+                }
+       
                 break;
             case "PLAY":
+                console.log("setting user ID in play....")
+                setUser( (oldUser) => ({...oldUser, ...{connected: true, id:payloadData.id}}));
+              
                 //If an empty string was sent
                 if(payloadData.message.toLowerCase() === "no"){
                     break;
