@@ -25,7 +25,7 @@ function PlayRoom() {
     const [game, setGame] = useState({
         topCard: null,
         turn: "1",
-        direction: "Left",
+        direction: "LEFT",
         scores:["0","0","0","0"]
     })
 
@@ -202,6 +202,18 @@ function PlayRoom() {
         }
     }
 
+    function requestStartingTopCard(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: "starting top card",
+                action:"DRAW"
+            };
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+        }
+    }
+
     function requestTopCard(){
         if(stompClient){
             let messageToSend = {
@@ -222,23 +234,26 @@ function PlayRoom() {
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 if(payloadData.numPlayers === "4"){
                     await requestStartingCards();
-                    requestTopCard();
+                    requestStartingTopCard();
                 }
                 break;
             case "DRAW":
+                if(payloadData.message){
+                    setAnnouncements([{id:uuidv4(), message:payloadData.message}])
+                }
                 let payloadCards = JSON.parse(payloadData.cards);
                 const newTopCard = payloadCards[0];
                 newTopCard.id = uuidv4();
                 newTopCard.selected = false;
                 newTopCard.front = true;    
-                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard}}));
+                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
                 break;
             default:
                 break;
         }
     }
 
-    const onPrivateMessageReceived = (payload) => {
+    const onPrivateMessageReceived = async(payload) => {
         let payloadData = JSON.parse(payload.body);
         console.log("Received a private message!",payloadData);
         let newCards;
@@ -259,29 +274,48 @@ function PlayRoom() {
                 setHand( (oldHand) => ([...oldHand, ...newCards]));
                 break;
             case "PLAY":
+                //If an empty string was sent
                 if(payloadData.message.toLowerCase() === "no"){
                     break;
                 }
 
-                else if(payloadData.message.toLowerCase() !== "yes"){
-                    let newAnnouncements = payloadData.message.split("\n");
-                    console.log(newAnnouncements);
-                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                    console.log("After",newAnnouncements)
-                    setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]))
+                //If a card was sent
+                else{
+                    newCards = JSON.parse(payloadData.cards);
+                    newCards.forEach(card => {
+                        card.suit = card.suit.toLowerCase();
+                        card.rank = card.rank.toLowerCase();
+                        card.id = uuidv4();
+                        card.selected = false;
+                        card.front = true;    
+                    })
+                    setHand(newCards);
+                    
+                    //Update the top card if the card is played
+                    if(payloadData.message.toLowerCase() === "yes"){
+                        requestTopCard();
+                    }
+                  
+                    //The game will tell if you have a card that you can play
+                    else if(payloadData.message.toLowerCase().includes("you play")){
+                        let newAnnouncements = payloadData.message.split("\n");
+                        newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                        await setAnnouncements(newAnnouncements)
+                        requestTopCard();
+                    }
+
+                    //If you draw up to 3 cards and still can't play
+                    else{
+                        let newAnnouncements = payloadData.message.split("\n");
+                        newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                        setAnnouncements(newAnnouncements);
+                        await setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                        
+                    }
+               
                 }
 
-
-                newCards = JSON.parse(payloadData.cards);
-                newCards.forEach(card => {
-                    card.suit = card.suit.toLowerCase();
-                    card.rank = card.rank.toLowerCase();
-                    card.id = uuidv4();
-                    card.selected = false;
-                    card.front = true;    
-                })
-                setHand(newCards);
-                requestTopCard();
+      
                 break;
             default:
                 break;
@@ -330,7 +364,7 @@ function PlayRoom() {
 
 
   return (
-    <div className="container">
+    <div className="container animate__animated">
         {user.connected? 
         <>
 

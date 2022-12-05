@@ -47,8 +47,8 @@ function Card( {card, selected, toggleSelectedCard} ) {
 
   return (
     <>
-      <div className={getClassName()} onClick={handleCardClicked}>
-        <img src={getCardImage()} alt={card?card.rank + " " + card.suit:"stockpile"}></img>
+      <div className={getClassName() + " animate__animated"} onClick={handleCardClicked}>
+        <img className="card-img animate__animated" src={getCardImage()} alt={card?card.rank + " " + card.suit:"stockpile"}></img>
       </div>
 
     </>
