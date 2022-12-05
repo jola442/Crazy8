@@ -113,7 +113,7 @@ public class MessageController {
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
-        response.setAction(Action.DRAW);
+        response.setAction(Action.UPDATE);
         response.setDirection(game.getDirection());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
@@ -160,6 +160,7 @@ public class MessageController {
         response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
         response.setDirection(game.getDirection());
+        response.setMessage(message.getMessage());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
         if(game.getTopCard() == null){
@@ -170,7 +171,7 @@ public class MessageController {
             newTopCard.add(game.getTopCard());
         }
 
-        response.setAction(Action.DRAW);
+        response.setAction(Action.UPDATE);
         response.setCards(stringifyCards(newTopCard));
 
 
@@ -185,22 +186,19 @@ public class MessageController {
             response = handleUserJoining(message);
         }
 
-        else if(message.getAction() == Action.DRAW){
-            if(message.getMessage().equalsIgnoreCase("starting top card")){
-                response = handleSendingStartingTopCard(message);
-            }
-
-            else{
-                response = handleSendingTopCard(message);
-            }
-
-        }
-
         else if(message.getAction() == Action.UPDATE){
             if(message.getMessage().equalsIgnoreCase("turn")){
                 response.setMessage(message.getMessage());
                 response.setTurn(Integer.toString(game.getTurn()));
                 response.setAction(Action.UPDATE);
+            }
+
+            else if(message.getMessage().equalsIgnoreCase("starting top card")){
+                response = handleSendingStartingTopCard(message);
+            }
+
+            else{
+                response = handleSendingTopCard(message);
             }
 
 //            else if(message.getMessage().equalsIgnoreCase("top card")){

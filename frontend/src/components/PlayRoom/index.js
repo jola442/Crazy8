@@ -202,41 +202,53 @@ function PlayRoom() {
         }
     }
 
-    function requestStartingTopCard(){
+    function requestPublicInformation(message){
         if(stompClient){
             let messageToSend = {
                 name: user.name,
-                message: "starting top card",
-                action:"DRAW"
-            };
-            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
-        }
-    }
-
-    function requestTopCard(){
-        if(stompClient){
-            let messageToSend = {
-                name: user.name,
-                message: "top card",
-                action:"DRAW"
-            };
-            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
-        }
-    }
-
-    function requestTurn(){
-        if(stompClient){
-            let messageToSend = {
-                name: user.name,
-                message: "turn",
+                message: message,
                 action:"UPDATE"
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
           
         }
     }
+
+    // function requestStartingTopCard(){
+    //     if(stompClient){
+    //         let messageToSend = {
+    //             name: user.name,
+    //             message: "starting top card",
+    //             action:"DRAW"
+    //         };
+    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+    //     }
+    // }
+
+    // function requestPublicInformation("top card"){
+    //     if(stompClient){
+    //         let messageToSend = {
+    //             name: user.name,
+    //             message: "top card",
+    //             action:"DRAW"
+    //         };
+    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+    //     }
+    // }
+
+    // function requestTurn(){
+    //     if(stompClient){
+    //         let messageToSend = {
+    //             name: user.name,
+    //             message: "turn",
+    //             action:"UPDATE"
+    //         };
+    //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+    //     }
+    // }
 
     const onPublicMessageReceived = async(payload) => {
         let payloadData = JSON.parse(payload.body);
@@ -246,24 +258,46 @@ function PlayRoom() {
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 if(payloadData.numPlayers === "4"){
                     await requestStartingCards();
-                    requestStartingTopCard();
+                    await requestPublicInformation("starting top card");
                 }
                 break;
-            case "DRAW":
-                if(payloadData.message){
-                    setAnnouncements([{id:uuidv4(), message:payloadData.message}])
-                }
-                let payloadCards = JSON.parse(payloadData.cards);
-                const newTopCard = payloadCards[0];
-                newTopCard.id = uuidv4();
-                newTopCard.selected = false;
-                newTopCard.front = true;    
-                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
-                break;
+            // case "DRAW":
+                // if(payloadData.message){
+                //     setAnnouncements([{id:uuidv4(), message:payloadData.message}])
+                // }
+                // let payloadCards = JSON.parse(payloadData.cards);
+                // const newTopCard = payloadCards[0];
+                // newTopCard.id = uuidv4();
+                // newTopCard.selected = false;
+                // newTopCard.front = true;    
+                // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
+                // break;
             case "UPDATE":
                 if(payloadData.message.toLowerCase() === "turn"){
                     setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                 }
+
+                else{
+                    let payloadCards = JSON.parse(payloadData.cards);
+                    const newTopCard = payloadCards[0];
+                    newTopCard.id = uuidv4();
+                    newTopCard.selected = false;
+                    newTopCard.front = true;    
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, topCard:newTopCard, direction:payloadData.direction}}));
+                    
+
+                    //The server sends a message unless the top card is a starting top card
+                    if(payloadData.message !== "" && payloadData.message.toLowerCase() !== "starting top card"){
+                        console.log("Not equal to starting card or '' ran with this Message:",payloadData.message);
+                        setAnnouncements([{id:uuidv4(), message:payloadData.message}]);
+                    }
+
+                    else{
+                        console.log("Not equal to starting card or '' DID NOT run with this Message:",payloadData.message);
+                    }
+           
+                }
+
                 break;
             default:
                 break;
@@ -310,15 +344,16 @@ function PlayRoom() {
                     
                     //Update the top card if the card is played
                     if(payloadData.message.toLowerCase() === "yes"){
-                        requestTopCard();
+                        requestPublicInformation("top card");
                     }
                   
                     //The game will tell if you have a card that you can play
                     else if(payloadData.message.toLowerCase().includes("you play")){
                         let newAnnouncements = payloadData.message.split("\n");
+                        console.log("message contains 'you play'");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         await setAnnouncements(newAnnouncements)
-                        requestTopCard();
+                        requestPublicInformation("top card");
                     }
 
                     //If you draw up to 3 cards and still can't play
@@ -327,7 +362,7 @@ function PlayRoom() {
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         setAnnouncements(newAnnouncements);
                         await setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
-                        requestTurn();
+                        requestPublicInformation("turn");
                     }
                
                 }
