@@ -137,4 +137,27 @@ class GameUnitTest {
         assertEquals(3, game.updateTurn());
 
     }
+
+    @Test
+    public void testCanPlayNCardsFromHand(){
+        game.setTopCard(new Card(Rank.FOUR, Suit.HEARTS));
+        player1.getHand().addAll(Arrays.asList(new Card(Rank.SIX, Suit.CLUBS)));
+        assertTrue(game.canPlayFromHand(player1, 0));
+
+        player1.getHand().addAll(Arrays.asList(new Card(Rank.EIGHT, Suit.CLUBS)));
+        assertTrue(game.canPlayFromHand(player1, 1));
+
+        //The player's hand contains a card wih the same suit
+        player2.getHand().addAll(Arrays.asList(new Card(Rank.SIX, Suit.HEARTS), new Card(Rank.THREE, Suit.HEARTS)));
+        assertTrue(game.canPlayFromHand(player2, 2));
+
+        //The player's hand does not contain a card with the same rank or suit
+        player3.getHand().addAll(Arrays.asList(new Card(Rank.TEN, Suit.HEARTS), new Card(Rank.EIGHT, Suit.SPADES), new Card(Rank.FOUR, Suit.DIAMONDS)));
+        assertTrue(game.canPlayFromHand(player3, 3));
+
+        //The player's hand contains a card with the same rank
+        player4.getHand().addAll(Arrays.asList(new Card(Rank.FOUR, Suit.CLUBS), new Card(Rank.THREE, Suit.HEARTS), new Card(Rank.FOUR, Suit.SPADES), new Card(Rank.FIVE,Suit.HEARTS)));
+        assertTrue(game.canPlayFromHand(player4, 4));
+
+    }
 }
