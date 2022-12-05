@@ -1,10 +1,13 @@
 package com.crazy8.game;
 
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import static com.crazy8.game.Defs.*;
 
+@Component
 public class Deck {
     private List<Card> deck;
 

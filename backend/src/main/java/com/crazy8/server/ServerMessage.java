@@ -9,10 +9,11 @@ public class ServerMessage {
     private String scores;
     private Action action;
     private Direction direction;
-    private String turn;
+    private String turnNumber;
     private String roundNum;
     private String id;
     private String numPlayers;
+    private String currentPlayerTurn;
 
 
 
@@ -23,10 +24,11 @@ public class ServerMessage {
         scores = "0,0,0,0";
         action = Action.JOIN;
         direction = Direction.LEFT;
-        turn = "0";
+        turnNumber = "0";
         roundNum = "0";
         id = "-1";
         numPlayers = "0";
+        currentPlayerTurn = "";
     }
 
     public String getName() {
@@ -77,12 +79,12 @@ public class ServerMessage {
         this.direction = direction;
     }
 
-    public String getTurn() {
-        return turn;
+    public String getTurnNumber() {
+        return turnNumber;
     }
 
-    public void setTurn(String turn) {
-        this.turn = turn;
+    public void setTurnNumber(String turnNumber) {
+        this.turnNumber = turnNumber;
     }
 
     public String getRoundNum() {
@@ -109,6 +111,10 @@ public class ServerMessage {
         this.numPlayers = numPlayers;
     }
 
+    public void setCurrentPlayerTurn(String currentPlayerTurn) {
+        this.currentPlayerTurn = currentPlayerTurn;
+    }
+
     @Override
     public String toString() {
         return "ServerMessage{" +
@@ -118,7 +124,7 @@ public class ServerMessage {
                 ", scores='" + scores + '\'' +
                 ", action=" + action +
                 ", gameDirection='" + direction + '\'' +
-                ", turn='" + turn + '\'' +
+                ", turn='" + turnNumber + '\'' +
                 ", roundNum='" + roundNum + '\'' +
                 ", id='" + id + '\'' +
                 ", numPlayers='" + numPlayers + '\'' +

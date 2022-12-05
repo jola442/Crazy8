@@ -12,10 +12,12 @@ public class Game {
     private int numHeartsCards;
     private int numDiamondsCards;
     private int numClubsCards;
-    List<Player> players;
+    private int numStackedTwoCards;
+    private List<Player> players;
     private Card topCard;
     private int turn;
     private Direction direction;
+
 
     public Game(){
         deck = new Deck();
@@ -28,6 +30,7 @@ public class Game {
         topCard = null;
         direction = Direction.LEFT;
         turn = 0;
+        numStackedTwoCards = 0;
     }
 
     public int getNumCards() {
@@ -72,6 +75,14 @@ public class Game {
 
     public Direction getDirection() {
         return direction;
+    }
+
+    public int getNumStackedTwoCards() {
+        return numStackedTwoCards;
+    }
+
+    public void setNumStackedTwoCards(int numStackedTwoCards) {
+        this.numStackedTwoCards = numStackedTwoCards;
     }
 
     public void updateCardCount(Card card){

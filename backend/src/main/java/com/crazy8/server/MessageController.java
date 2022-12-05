@@ -5,6 +5,7 @@ import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
 import static com.crazy8.game.Defs.NUM_STARTING_CARDS;
 import static com.crazy8.game.Defs.MAX_NUM_DRAWS_PER_TURN;
+import static com.crazy8.game.Defs.TWO_CARD_PENALTY;
 import com.crazy8.game.Defs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -22,6 +23,7 @@ public class MessageController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+
 
     private Game game = new Game();
 
@@ -87,7 +89,7 @@ public class MessageController {
     private ServerMessage handleUserJoining(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
@@ -103,7 +105,7 @@ public class MessageController {
 
         if(game.getPlayers().size() == 4){
             game.setTurn(1);
-            response.setTurn(Integer.toString(game.getTurn()));
+            response.setTurnNumber(Integer.toString(game.getTurn()));
         }
         return response;
     }
@@ -111,7 +113,7 @@ public class MessageController {
     private ServerMessage handleSendingTopCard(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
         response.setAction(Action.UPDATE);
         response.setDirection(game.getDirection());
@@ -174,6 +176,11 @@ public class MessageController {
                 msg += "Player " + firstPlayer + " played a QUEEN causing Player " +  secondPlayer + " to miss their turn";
 
             }
+
+            else if(game.getTopCard().getRank() == Rank.TWO){
+                System.out.println("Increasing num 2s by 1 for player " + game.getTurn());
+                game.setNumStackedTwoCards(game.getNumStackedTwoCards()+1);
+            }
             response.setMessage(msg);
             newTopCard.add(game.getTopCard());
         }
@@ -187,7 +194,7 @@ public class MessageController {
     private ServerMessage handleSendingStartingTopCard(@Payload ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
         response.setDirection(game.getDirection());
         response.setMessage(message.getMessage());
@@ -219,7 +226,7 @@ public class MessageController {
         else if(message.getAction() == Action.UPDATE){
             if(message.getMessage().equalsIgnoreCase("turn")){
                 response.setMessage(message.getMessage());
-                response.setTurn(Integer.toString(game.getTurn()));
+                response.setTurnNumber(Integer.toString(game.getTurn()));
                 response.setAction(Action.UPDATE);
             }
 
@@ -235,6 +242,9 @@ public class MessageController {
 //                response.setCards(stringifyCards(new ArrayList<>(game.getTopCard())));
 //            }
         }
+        if(game.getPlayers().size() > 1 && game.getTurn() > 0){
+            response.setCurrentPlayerTurn(game.getPlayers().get(game.getTurn()-1).getName());
+        }
 
         return response;
     }
@@ -242,7 +252,7 @@ public class MessageController {
     public ServerMessage handleSendingUserID(@Payload ClientMessage message, Player player){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setAction(Action.JOIN);
         if(player == null){
@@ -259,7 +269,7 @@ public class MessageController {
     private  ServerMessage handleSendingStartingCards(@Payload ClientMessage message, Player player) {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setAction(Action.DRAW);
         for(int i = 0; i < NUM_STARTING_CARDS; ++i){
@@ -274,25 +284,75 @@ public class MessageController {
     private ServerMessage handleSendingDrawnCard(@Payload ClientMessage message, Player player) {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
-        response.setAction(Action.DRAW);
-        Card drawnCard = game.drawCard(player);
-        if(drawnCard != null){
-            ArrayList<Card> cardsToSend = new ArrayList<>();
-            cardsToSend.add(drawnCard);
-            response.setCards(stringifyCards(cardsToSend));
+
+        //If the top card is a 2
+        if(message.getMessage().equalsIgnoreCase("2 card")){
+            int numCardsToPlay = TWO_CARD_PENALTY * game.getNumStackedTwoCards();
+            boolean playerCanPlay = game.canPlayFromHand(player, numCardsToPlay);
+            StringBuilder msg = new StringBuilder(game.getNumStackedTwoCards() + " player(s) played a 2 \n So you have to play " + numCardsToPlay + " cards or draw " + numCardsToPlay + " cards\n");
+            if(playerCanPlay){
+                response.setAction(Action.PLAY);
+                System.out.println("determined that the user can play");
+
+                int numCardsPlayed = 0;
+                for(Card card: player.getHand()){
+                    if(numCardsPlayed == (TWO_CARD_PENALTY*game.getNumStackedTwoCards())){
+                        break;
+                    }
+                    if(game.playCard(player, card) != null){
+                        msg.append("You play a ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
+                        System.out.println(msg);
+                        numCardsPlayed++;
+                    }
+                }
+
+//                if the player's hand contains a 2
+                if(player.getHand().contains(new Card(Rank.TWO, Suit.SPADES))||
+                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
+                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
+                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))
+                ){
+                   game.setNumStackedTwoCards(game.getNumStackedTwoCards()+1);
+                }
+
+                else{
+                    game.setNumStackedTwoCards(0);
+                }
+
+            }
+
+            else{
+                response.setAction(Action.DRAW);
+                msg.append("You can't play up to ").append(numCardsToPlay).append(" cards \n So");
+                System.out.println(numCardsToPlay);
+
+                for(int i = 0; i < numCardsToPlay; i++){
+                    Card card = game.drawCard(player);
+                    msg.append("you draw a(n) ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
+                }
+            }
+            response.setMessage(msg.toString());
         }
 
-//        System.out.println(response.toString());
-//        simpMessagingTemplate.convertAndSendToUser(response.getName(), "/private", response); //user/Jola/private
+        else{
+            response.setAction(Action.DRAW);
+            Card drawnCard = game.drawCard(player);
+            if(drawnCard != null){
+                ArrayList<Card> cardsToSend = new ArrayList<>();
+                cardsToSend.add(drawnCard);
+                response.setCards(stringifyCards(cardsToSend));
+            }
+        }
+        response.setCards(stringifyCards(player.getHand()));
         return response;
     }
 
     private ServerMessage handlePlayingACard(@Payload ClientMessage message, Player player){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
-        response.setTurn(Integer.toString(game.getTurn()));
+        response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setAction(Action.PLAY);
 
@@ -377,7 +437,7 @@ public class MessageController {
             response.setCards(stringifyCards(player.getHand()));
 
             response.setDirection(game.getDirection());
-            response.setTurn(Integer.toString(game.getTurn()));
+            response.setTurnNumber(Integer.toString(game.getTurn()));
 
         }
         return response;
@@ -414,6 +474,16 @@ public class MessageController {
         }
 
         System.out.println(response.toString());
+        if(player == null){
+            response.setId("1");
+
+        }
+
+        else{
+            response.setCurrentPlayerTurn(player.getName());
+            response.setId(Integer.toString(player.getId()));
+        }
+
         simpMessagingTemplate.convertAndSendToUser(response.getName(), "/private", response); //user/Jola/private
 
         return response;
