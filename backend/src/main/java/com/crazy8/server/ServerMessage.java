@@ -1,5 +1,6 @@
 package com.crazy8.server;
 import com.crazy8.server.Defs.Action;
+import com.crazy8.game.Defs.*;
 
 public class ServerMessage {
     private String name;
@@ -7,7 +8,7 @@ public class ServerMessage {
     private String message;
     private String scores;
     private Action action;
-    private String gameDirection;
+    private Direction direction;
     private String turn;
     private String roundNum;
     private String id;
@@ -21,9 +22,9 @@ public class ServerMessage {
         message = "";
         scores = "0,0,0,0";
         action = Action.JOIN;
-        gameDirection = "Left";
+        direction = Direction.LEFT;
         turn = "0";
-        roundNum = "1";
+        roundNum = "0";
         id = "-1";
         numPlayers = "0";
     }
@@ -68,12 +69,12 @@ public class ServerMessage {
         return action;
     }
 
-    public String getGameDirection() {
-        return gameDirection;
+    public Direction getDirection() {
+        return direction;
     }
 
-    public void setGameDirection(String gameDirection) {
-        this.gameDirection = gameDirection;
+    public void setDirection(Direction direction) {
+        this.direction = direction;
     }
 
     public String getTurn() {
@@ -116,7 +117,7 @@ public class ServerMessage {
                 ", message='" + message + '\'' +
                 ", scores='" + scores + '\'' +
                 ", action=" + action +
-                ", gameDirection='" + gameDirection + '\'' +
+                ", gameDirection='" + direction + '\'' +
                 ", turn='" + turn + '\'' +
                 ", roundNum='" + roundNum + '\'' +
                 ", id='" + id + '\'' +

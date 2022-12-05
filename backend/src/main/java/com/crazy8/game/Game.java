@@ -27,6 +27,7 @@ public class Game {
         players = new ArrayList<>();
         topCard = null;
         direction = Direction.LEFT;
+        turn = 0;
     }
 
     public int getNumCards() {
@@ -69,6 +70,10 @@ public class Game {
         this.turn = turn;
     }
 
+    public Direction getDirection() {
+        return direction;
+    }
+
     public void updateCardCount(Card card){
         if(card.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;
@@ -103,6 +108,7 @@ public class Game {
             return null;
         }
         Card newTopCard = deck.getDeck().remove(0);
+        System.out.println(deck);
         while(newTopCard.getRank() == Rank.EIGHT){
             Collections.shuffle(deck.getDeck());
         }

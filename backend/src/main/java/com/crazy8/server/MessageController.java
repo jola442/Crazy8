@@ -88,6 +88,7 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
+        response.setDirection(game.getDirection());
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         //Creating the player model
@@ -112,6 +113,53 @@ public class MessageController {
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+        response.setAction(Action.DRAW);
+        response.setDirection(game.getDirection());
+
+        ArrayList<Card> newTopCard = new ArrayList<>();
+        if(game.getTopCard() != null){
+            if(game.getTopCard().getRank() == Rank.ACE){
+                String msg = "The game direction was changed from ";
+                if(game.getDirection() == Direction.LEFT){
+                    msg += Direction.RIGHT + " to " + Direction.LEFT + " by Player " + "WILL IMPLEMENT LATER"+ " playing an ACE";
+                }
+
+                else{
+                    msg += Direction.LEFT + " to " +Direction.RIGHT + " by Player " + "WILL IMPLEMENT LATER" + " playing an ACE";
+                }
+                response.setMessage(msg);
+
+            }
+
+            else if(game.getTopCard().getRank() == Rank.QUEEN){
+                String msg = "";
+                if(game.getDirection() == Direction.LEFT){
+//                    int secondPlayerNum = Math.max(game.getTurn() - 1, 1);
+                    msg += "Player IMPLEMENT LATER " + "played a QUEEN causing Player IMPLEMENT LATER" + " to miss their turn";
+                }
+
+                else{
+//                    int secondPlayerNum = Math.max(game.getTurn()+ 1, 1);
+                    msg += "Player IMPLEMENT LATER " + "played a QUEEN causing Player IMPLEMENT LATER" + " to miss their turn";
+                }
+                response.setMessage(msg);
+            }
+            newTopCard.add(game.getTopCard());
+        }
+
+
+        response.setCards(stringifyCards(newTopCard));
+
+
+        return response;
+    }
+
+    private ServerMessage handleSendingStartingTopCard(@Payload ClientMessage message){
+        ServerMessage response = new ServerMessage();
+        response.setName(message.getName());
+        response.setTurn(Integer.toString(game.getTurn()));
+        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+        response.setDirection(game.getDirection());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
         if(game.getTopCard() == null){
@@ -129,7 +177,6 @@ public class MessageController {
         return response;
     }
 
-
     @MessageMapping("/message")  //app/message
     @SendTo("/playroom/public")
     private ServerMessage receivePublicMessage(@Payload ClientMessage message){
@@ -139,7 +186,14 @@ public class MessageController {
         }
 
         else if(message.getAction() == Action.DRAW){
-            response = handleSendingTopCard(message);
+            if(message.getMessage().equalsIgnoreCase("starting top card")){
+                response = handleSendingStartingTopCard(message);
+            }
+
+            else{
+                response = handleSendingTopCard(message);
+            }
+
         }
 
         return response;
@@ -149,6 +203,7 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
+        response.setDirection(game.getDirection());
         response.setAction(Action.JOIN);
         if(player == null){
             response.setId(Integer.toString(game.getPlayers().size()+1));
@@ -165,6 +220,7 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
+        response.setDirection(game.getDirection());
         response.setAction(Action.DRAW);
         for(int i = 0; i < NUM_STARTING_CARDS; ++i){
             game.drawCard(player);
@@ -179,6 +235,7 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
+        response.setDirection(game.getDirection());
         response.setAction(Action.DRAW);
         Card drawnCard = game.drawCard(player);
         if(drawnCard != null){
@@ -196,9 +253,9 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurn(Integer.toString(game.getTurn()));
+        response.setDirection(game.getDirection());
         response.setAction(Action.PLAY);
-        System.out.println(message);
-        System.out.println("The card i'm getting from client: "+message.getMessage());
+
 
         if(message.getMessage().equalsIgnoreCase("")){
             response.setMessage("no");
@@ -209,8 +266,8 @@ public class MessageController {
             //If the selected card cannot be played
             if(game.playCard(player, card) == null){
               String msg = "You cannot play this card (" + card.getRank() + " " + card.getSuit() + ")\n";
-              boolean hasDrawn = false;
 
+              int numDrawnCards = 0;
               //Draw up to 3 cards and play
                for(int i = 0; i < MAX_NUM_DRAWS_PER_TURN; ++i){
                    //If the player cannot play any card from their hand
@@ -218,8 +275,8 @@ public class MessageController {
                        Card newCard = game.drawCard(player);
                        //Check if the player successfully draws a card
                        if(newCard != null){
-                           msg += "You cannot play any other card from your hand \n So you draw a " + newCard.getRank().toString() + " " + newCard.getSuit() + "\n";
-                           hasDrawn = true;
+                           msg += "You cannot play any other card from your hand \n So you draw a(n) " + newCard.getRank().toString() + " " + newCard.getSuit() + "\n";
+                           numDrawnCards++;
                        }
 
                        else{
@@ -231,12 +288,13 @@ public class MessageController {
                    //If the player can play a card from their hand
                    else{
                        //If they can play because they drew a card, they must play the card
-                       if(hasDrawn){
+                       if(numDrawnCards >= 1){
                            int handSize = player.getHand().size();
                            Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
                            if(cardPlayed!= null){
-                               msg += "You play a " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
+                               msg += "You play a(n) " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
                                game.setTopCard(cardPlayed);
+                               game.updateTurn();
                                break;
                            }
                        }
@@ -249,20 +307,32 @@ public class MessageController {
 
                    }
                }
+
+                System.out.println("Num drawn cards: "+numDrawnCards);
+
+               //If after 3 draws they still can't play, it is someone else's turn
+               if(numDrawnCards == 3){
+                   System.out.println("I am updating the turn when a player draws 3 cards");
+                   game.updateTurn();
+               }
+
+
                 response.setMessage(msg);
 
             }
             else{
                 game.setTopCard(card);
+                game.updateTurn();
                 response.setMessage("yes");
             }
 
+
+
             response.setCards(stringifyCards(player.getHand()));
 
-            if(game.getTopCard().getRank() != Rank.ACE && game.getTopCard().getRank() != Rank.QUEEN){
-                game.setTurn((game.getTurn()+1)%5);
-                response.setTurn(Integer.toString(game.getTurn()));
-            }
+            response.setDirection(game.getDirection());
+            response.setTurn(Integer.toString(game.getTurn()));
+
         }
         return response;
     }

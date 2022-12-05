@@ -25,4 +25,10 @@ public class Deck {
         return deck;
     }
 
+    @Override
+    public String toString() {
+        return "Deck{" +
+                "deck=" + deck +
+                '}';
+    }
 }

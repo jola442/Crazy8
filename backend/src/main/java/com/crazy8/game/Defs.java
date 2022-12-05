@@ -25,19 +25,19 @@ public class Defs {
         @Override
         public String toString() {
             if(value == 1){
-                return "ace";
+                return "ACE";
             }
 
             else if(value == 11){
-                return "jack";
+                return "JACK";
             }
 
             else if(value == 12){
-                return "queen";
+                return "QUEEN";
             }
 
             else if(value == 13){
-                return "king";
+                return "KING";
             }
 
             else{
