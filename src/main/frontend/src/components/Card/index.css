@@ -1,0 +1,16 @@
+@import "animate.css";
+
+/* .card{
+    animation:backIn 2s;
+} */
+
+.card img{
+    width:10em;
+    height:15em;
+    outline-color: none;
+}
+
+.card.active img{
+    outline-color:red;
+    outline-style: solid;
+}
