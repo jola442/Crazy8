@@ -4,7 +4,10 @@ import com.crazy8.game.Card;
 import com.crazy8.game.Deck;
 import com.crazy8.game.Game;
 import io.cucumber.java.After;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -21,11 +24,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOf;
 
 @SpringBootTest
 @DirtiesContext
-public class aceAndQueenStepDefs {
+public class aceAndQueenSinglePlayerStepDefs {
 
     private static final ArrayList<WebDriver> webDrivers = new ArrayList<>();
     private static final String PORT_URL = "http://127.0.0.1:8080";
@@ -149,6 +153,75 @@ public class aceAndQueenStepDefs {
 //            new WebDriverWait(webDrivers.get(i), Duration.ofSeconds(30)).until(elementToBeClickable(webDrivers.get(3).findElement(By.cssSelector("ul.cardsList.li.card"))));
         }
         assertEquals("LEFT", webDrivers.get(3).findElement(CURRENT_GAME_DIRECTION).getText());
+    }
+
+
+    @When("player {} plays {} on {}")
+    public void playerPlaysCard(int playerNum, String cardString, String topCardString) throws InterruptedException {
+        if(playerNum == 1){
+//            Rank topCardRank = Rank.values()[Integer.parseInt(topCardString.split("-")[0].trim())-1];
+//            Suit topCardSuit = Suit.valueOf(topCardString.split("-")[1]);
+//            game.setTopCard(new Card(topCardRank, topCardSuit));
+            WebDriver webDriver = webDrivers.get(0);
+            cardString = cardString.toLowerCase();
+
+//            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+            waitForDisplayed(webDriver,By.className(cardString));
+            webDriver.findElement(By.className(cardString)).click();
+            WebElement playCardButton = webDriver.findElement(PLAY_CARD_BUTTON);
+            playCardButton.click();
+            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+            WebElement topCard = webDriver.findElement(By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]"));
+            System.out.println("TopCard Element: " + topCard.getAttribute("innerHTML"));
+            System.out.println(cardString);
+            assertTrue(hasClass(topCard, cardString));
+        }
+
+        else{
+            ArrayList<String> playerCardSelections = new ArrayList<>(Arrays.asList("3-clubs", "4-clubs", "5-clubs"));
+
+            for(int i = 0; i < playerCardSelections.size(); ++i){
+                WebDriver webDriver = webDrivers.get(i);
+                String playerCardSelection = playerCardSelections.get(i);
+//                webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+                waitForDisplayed(webDriver, (By.className(playerCardSelection)));
+                webDriver.findElement(By.className(playerCardSelection)).click();
+                WebElement playCardButton = webDriver.findElement(PLAY_CARD_BUTTON);
+                playCardButton.click();
+            }
+
+            WebDriver webDriver = webDrivers.get(3);
+            cardString = cardString.toLowerCase();
+
+//            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+            waitForDisplayed(webDriver, (By.className(cardString)));
+            webDriver.findElement(By.className(cardString)).click();
+            WebElement playCardButton = webDriver.findElement(PLAY_CARD_BUTTON);
+            playCardButton.click();
+//            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+            waitForDisplayed(webDriver, By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/img[1]"));
+            WebElement topCard = webDriver.findElement(By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]"));
+            System.out.println("TopCard Element: " + topCard.getAttribute("innerHTML"));
+            System.out.println("Card class i am looking for: " +cardString);
+            assertTrue(hasClass(topCard, cardString));
+        }
+
+    }
+
+    @Then("{} should play next")
+    public void shouldPlayNext(int nextPlayer) {
+        WebDriver webDriver = webDrivers.get(3);
+        webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(30));
+        WebElement currentTurn = webDriver.findElement(CURRENT_TURN);
+        assertEquals("Player " + Integer.toString(nextPlayer), currentTurn.getText());
+    }
+
+    @And("the game direction is now {}")
+    public void theGameDirectionIsNow(Direction newDirection) {
+        WebDriver webDriver = webDrivers.get(3);
+        webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(30));
+        WebElement currentGameDirection = webDriver.findElement(CURRENT_GAME_DIRECTION);
+        assertEquals(newDirection.toString(), currentGameDirection.getText());
     }
 
 
