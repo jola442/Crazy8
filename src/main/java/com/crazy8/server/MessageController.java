@@ -3,9 +3,6 @@ import com.crazy8.game.Card;
 import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
-import static com.crazy8.game.Defs.NUM_STARTING_CARDS;
-import static com.crazy8.game.Defs.MAX_NUM_DRAWS_PER_TURN;
-import static com.crazy8.game.Defs.TWO_CARD_PENALTY;
 import com.crazy8.game.Defs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -16,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.crazy8.game.Defs.*;
 
 
 @Controller
@@ -24,8 +22,8 @@ public class MessageController {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-
-    private Game game = new Game();
+    @Autowired
+    private Game game;
 
     public String stringifyCards(List<Card> cards){
         String cardsString = "[";
@@ -79,8 +77,8 @@ public class MessageController {
                 cardSuit = Suit.CLUBS;
                 break;
         }
-        System.out.println("This should be a queen:" + Rank.values()[11]);
-        System.out.println("Card rank: " + cardRank);
+
+//        System.out.println("Card rank: " + cardRank);
         System.out.println("Creating this card:" + cardRank.toString() + cardSuit.toString());
         return new Card(cardRank, cardSuit);
 
@@ -104,6 +102,16 @@ public class MessageController {
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         if(game.getPlayers().size() == 4){
+            if(game.getTopCard() == null){
+                game.placeStartingCard();
+            }
+
+            for(int i = 0; i < NUM_PLAYERS; ++i){
+                for(int j = 0; j < NUM_STARTING_CARDS; ++j){
+                    game.getPlayers().get(i).getHand().add(game.drawCard());
+                }
+            }
+
             game.setTurn(1);
             response.setTurnNumber(Integer.toString(game.getTurn()));
         }
@@ -174,6 +182,7 @@ public class MessageController {
 
                 }
                 msg += "Player " + firstPlayer + " played a QUEEN causing Player " +  secondPlayer + " to miss their turn";
+                System.out.println(msg);
 
             }
 
@@ -200,17 +209,18 @@ public class MessageController {
         response.setMessage(message.getMessage());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
-        if(game.getTopCard() == null){
-            newTopCard.add(game.placeStartingCard());
-        }
-
-        else{
-            newTopCard.add(game.getTopCard());
-        }
+        newTopCard.add(game.getTopCard());
+//        if(game.getTopCard() == null){
+//            newTopCard.add(game.placeStartingCard());
+//        }
+//
+//        else{
+//            newTopCard.add(game.getTopCard());
+//        }
 
         response.setAction(Action.UPDATE);
         response.setCards(stringifyCards(newTopCard));
-
+        System.out.println("Sending the starting top card to all players " + newTopCard);
 
         return response;
     }
@@ -272,10 +282,8 @@ public class MessageController {
         response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setAction(Action.DRAW);
-        for(int i = 0; i < NUM_STARTING_CARDS; ++i){
-            game.drawCard(player);
-        }
 
+        System.out.println("Sending starting cards to " + player.getName() + ": " + player.getHand());
         response.setCards(stringifyCards(player.getHand()));
         response.setMessage(message.getMessage());
         return response;

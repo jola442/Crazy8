@@ -61,6 +61,10 @@ public class Defs {
 
     public static final int NUM_CARDS = 52;
     public static final int NUM_STARTING_CARDS = 5;
+
+    public static final int NUM_PLAYERS = 4;
+
     public static final int MAX_NUM_DRAWS_PER_TURN = 3;
     public static final int TWO_CARD_PENALTY = 2;
+
 }

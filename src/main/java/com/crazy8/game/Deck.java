@@ -1,37 +1,38 @@
 package com.crazy8.game;
 
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import static com.crazy8.game.Defs.*;
 
-
 public class Deck {
-    private List<Card> deck;
+    private List<Card> cards;
 
     public Deck(){
-        deck = new ArrayList<>();
+        cards = new ArrayList<>();
 
         for(int i = 0; i < Rank.values().length; ++i){
             for(int j = 0; j < Suit.values().length; ++j){
                 Card card = new Card(Rank.values()[i], Suit.values()[j]);
-                deck.add(card);
+                cards.add(card);
             }
         }
 
-        Collections.shuffle(deck);
+        Collections.shuffle(cards);
     }
 
-    public List<Card> getDeck() {
-        return deck;
+    public List<Card> getCards() {
+        return cards;
+    }
+
+    public void setCards(List<Card> cards) {
+        this.cards = cards;
     }
 
     @Override
     public String toString() {
         return "Deck{" +
-                "deck=" + deck +
+                "deck=" + cards +
                 '}';
     }
 }

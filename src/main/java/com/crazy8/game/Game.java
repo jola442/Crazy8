@@ -1,10 +1,13 @@
 package com.crazy8.game;
 import com.crazy8.game.Defs.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Component
 public class Game {
     private Deck deck;
     private int numCards;
@@ -13,6 +16,7 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     private int numStackedTwoCards;
+
     private List<Player> players;
     private Card topCard;
     private int turn;
@@ -105,23 +109,32 @@ public class Game {
     }
 
     public Card drawCard(Player player){
-        if(deck.getDeck().isEmpty()){
+        if(deck.getCards().isEmpty()){
             return null;
         }
-        Card topStockpileCard = deck.getDeck().remove(0);
+        Card topStockpileCard = deck.getCards().remove(0);
         player.getHand().add(topStockpileCard);
         updateCardCount(topStockpileCard);
         return topStockpileCard;
     }
 
-    public Card placeStartingCard(){
-        if(deck.getDeck().isEmpty()){
+    public Card drawCard(){
+        if(deck.getCards().isEmpty()){
             return null;
         }
-        Card newTopCard = deck.getDeck().remove(0);
+        Card topStockpileCard = deck.getCards().remove(0);
+        updateCardCount(topStockpileCard);
+        return topStockpileCard;
+    }
+
+    public Card placeStartingCard(){
+        if(deck.getCards().isEmpty()){
+            return null;
+        }
+        Card newTopCard = deck.getCards().remove(0);
         System.out.println(deck);
         while(newTopCard.getRank() == Rank.EIGHT){
-            Collections.shuffle(deck.getDeck());
+            Collections.shuffle(deck.getCards());
         }
         topCard = newTopCard;
         updateCardCount(topCard);
@@ -211,4 +224,28 @@ public class Game {
 
         return canBePlayed == numCards;
     }
+
+    public void resetState(){
+        deck = null;
+        numCards = Defs.NUM_CARDS;
+        numSpadesCards = Rank.values().length;
+        numDiamondsCards = Rank.values().length;
+        numClubsCards = Rank.values().length;
+        numHeartsCards = Rank.values().length;
+        players.clear();
+        topCard = null;
+        direction = Direction.LEFT;
+        turn = 0;
+        numStackedTwoCards = 0;
+    }
+
+
+    public void setDeck(Deck deck) {
+        this.deck = deck;
+    }
+
+    public Deck getDeck() {
+        return deck;
+    }
+
 }

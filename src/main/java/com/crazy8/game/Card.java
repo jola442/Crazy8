@@ -1,6 +1,7 @@
 package com.crazy8.game;
 import com.crazy8.game.Defs.Rank;
 import com.crazy8.game.Defs.Suit;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 

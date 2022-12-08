@@ -1,8 +1,11 @@
 package com.crazy8.game;
 
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class Player {
     private String name;
     private int score;
@@ -23,7 +26,6 @@ public class Player {
         score = 0;
         id = -1;
         hand = new ArrayList<>();
-        numCardDraws = 0;
     }
 
     public String getName() {
@@ -58,11 +60,4 @@ public class Player {
         this.hand = hand;
     }
 
-    public int getNumCardDraws() {
-        return numCardDraws;
-    }
-
-    public void setNumCardDraws(int numCardDraws) {
-        this.numCardDraws = numCardDraws;
-    }
 }

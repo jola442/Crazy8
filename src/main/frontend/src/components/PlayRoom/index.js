@@ -410,11 +410,6 @@ function PlayRoom() {
         }
     }
 
-
-
-
-
-
   return (
     <div className="container animate__animated">
         {user.connected? 
@@ -448,15 +443,15 @@ function PlayRoom() {
 
                 <div className='turn'>
                     <label>Turn:</label>
-                    {game.turn > 0?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
-                    :<span>Waiting for all players to join...</span>}
+                    {game.turn > 0?<span id="current-turn" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                    :<span id="current-turn">Waiting for all players to join...</span>}
                 </div>
 
                 <div className='game-direction'>
                     <label>Game Direction:</label>
-                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
+                    <span id="current-game-direction" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
                 </div>
-        </div>     
+        </div>
 
         <div className='game-table'>
             <div className = "game-cards">
@@ -484,8 +479,8 @@ function PlayRoom() {
                         <p dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(announcement.message)}}/>
                     </li>
                 ))}
-             
-            
+
+
                 </ul>
 
             </div>
@@ -493,7 +488,7 @@ function PlayRoom() {
 
             <div className='action-buttons'>
                 <button id='play-card-button' disabled={game.turn!==user.id} onClick={playCard}>Play Card(s)</button>
-                <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button>
+                {/* <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button> */}
             </div>
 
         </div>
@@ -518,7 +513,7 @@ function PlayRoom() {
         </>
         :
         <div className='join-game'>
-            <input id="join-textbox" placeholder='Enter your name here' value={user.name} onChange={handleUsername}/>
+            <input id="name-textbox" placeholder='Enter your name here' value={user.name} onChange={handleUsername}/>
             <button id="join-button" onClick={registerUser}>Join Game</button>
         </div>}
     </div>

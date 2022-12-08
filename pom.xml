@@ -19,6 +19,7 @@
 		<node.version>v18.12.1</node.version>
 		<npm.version>8.19.2</npm.version>
 		<frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
+		<cucumber.version>7.3.4</cucumber.version>
 	</properties>
 
 	<dependencies>
@@ -77,7 +78,7 @@
 		<dependency>
 			<groupId>io.github.bonigarcia</groupId>
 			<artifactId>webdrivermanager</artifactId>
-			<version>5.3.0</version>
+			<version>5.3.1</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java -->
@@ -98,6 +99,13 @@
 			<groupId>io.cucumber</groupId>
 			<artifactId>cucumber-junit-platform-engine</artifactId>
 			<version>7.3.4</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.cucumber</groupId>
+			<artifactId>cucumber-spring</artifactId>
+			<version>${cucumber.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -149,7 +157,7 @@
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<phase>prepare-package</phase>
+						<phase>compile</phase>
 						<configuration>
 							<arguments>run build</arguments>
 						</configuration>
@@ -165,7 +173,7 @@
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
-						<phase>prepare-package</phase>
+						<phase>compile</phase>
 						<configuration>
 							<outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
 							<resources>

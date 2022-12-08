@@ -1,15 +1,27 @@
 package com.crazy8.server.cucumber;
 
 import com.crazy8.game.Card;
+import com.crazy8.game.Deck;
 import com.crazy8.game.Game;
+import io.cucumber.java.After;
+import io.cucumber.java.en.Given;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import com.crazy8.game.Defs.*;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOf;
 
 @SpringBootTest
 @DirtiesContext
@@ -79,5 +91,65 @@ public class aceAndQueenStepDefs {
 
     @Autowired
     private Game game;
+
+    public WebElement waitForDisplayed(WebDriver webDriver, By selector) {
+        return new WebDriverWait(webDriver, Duration.ofSeconds(10)).until(visibilityOf(webDriver.findElement(selector)));
+    }
+
+    public boolean hasChildren(WebElement webElement) {
+        return webElement.findElements(By.xpath("./descendant-or-self::*")).size() > 1;
+    }
+
+    public boolean hasClass(WebElement element, String className) {
+        return Arrays.asList(element.getAttribute("class").split(" ")).contains(className);
+    }
+
+    @After
+    public void tearDown() {
+        for (int i = 0; i < webDrivers.size(); ++i) {
+            WebDriver webDriver = webDrivers.get(i);
+            webDriver.quit();
+        }
+        webDrivers.clear();
+        game.resetState();
+    }
+
+
+    @Given("all players are connected")
+    public void allPlayersAreConnected() throws InterruptedException {
+        game.resetState();
+        ArrayList<Card> riggedCards = new ArrayList<>();
+        game.setTopCard(topCardOne);
+        riggedCards.addAll(playerOneHand);
+        riggedCards.addAll(playerTwoHand);
+        riggedCards.addAll(playerThreeHand);
+        riggedCards.addAll(playerFourHand);
+        System.out.println("Rigged cards: " + riggedCards);
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.setDeck(riggedDeck);
+        WebDriverManager.chromedriver().setup();
+        for(int i = 0; i < 4; ++i) {
+            webDrivers.add(new ChromeDriver());
+            WebDriver webDriver = webDrivers.get(i);
+            webDriver.get(PORT_URL);
+            webDriver.manage().window().maximize();
+            waitForDisplayed(webDriver, NAME_TEXTBOX);
+            webDriver.findElement(NAME_TEXTBOX).sendKeys("Player " + Integer.toString(i + 1));
+            waitForDisplayed(webDriver, JOIN_BUTTON);
+            webDriver.findElement(JOIN_BUTTON).click();
+            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(1));
+
+        }
+
+
+
+        for(int i = 0; i < 4; ++i){
+            webDrivers.get(i).manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+//            new WebDriverWait(webDrivers.get(i), Duration.ofSeconds(30)).until(elementToBeClickable(webDrivers.get(3).findElement(By.cssSelector("ul.cardsList.li.card"))));
+        }
+        assertEquals("LEFT", webDrivers.get(3).findElement(CURRENT_GAME_DIRECTION).getText());
+    }
+
 
 }
