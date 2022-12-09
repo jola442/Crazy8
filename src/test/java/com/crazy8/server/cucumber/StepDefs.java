@@ -2,6 +2,7 @@ package com.crazy8.server.cucumber;
 
 import com.crazy8.game.Card;
 import com.crazy8.game.Deck;
+import com.crazy8.game.Defs;
 import com.crazy8.game.Game;
 import io.cucumber.java.After;
 import io.cucumber.java.en.And;
@@ -14,7 +15,6 @@ import org.openqa.selenium.WebDriver;
 import com.crazy8.game.Defs.*;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -25,77 +25,26 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOf;
+
 
 @SpringBootTest
 @DirtiesContext
-public class aceAndQueenStepDefs {
+public class StepDefs {
 
     private static final ArrayList<WebDriver> webDrivers = new ArrayList<>();
-    private static final String PORT_URL = "http://127.0.0.1:8080";
-    private static final By NAME_TEXTBOX = By.id("name-textbox");
-    private static final By JOIN_BUTTON = By.id("join-button");
-    private static final By PLAY_CARD_BUTTON = By.id("play-card-button");
-    private static final By CURRENT_TURN = By.id("current-turn");
-    private static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
+    public static final String PORT_URL = "http://127.0.0.1:8080";
+    public static final By NAME_TEXTBOX = By.id("name-textbox");
+    public static final By JOIN_BUTTON = By.id("join-button");
+    public static final By PLAY_CARD_BUTTON = By.id("play-card-button");
+    public static final By CURRENT_TURN = By.id("current-turn");
+    public static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
+    public static final By TOP_CARD = By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]");
 
     private static final By HAND = By.className("cardsList");
-
-    private static final Card topCardOne = new Card(Rank.EIGHT, Suit.CLUBS);
-
-    //    private static final Card topCardTwo = new Card(Rank.EIGHT, Suit.HEARTS);
-    private static final ArrayList<Card> playerOneHand =
-            new ArrayList<>(Arrays.asList(
-                    //needed for rigging
-                    new Card(Rank.THREE, Suit.CLUBS),
-                    new Card(Rank.ACE, Suit.HEARTS),
-                    new Card(Rank.QUEEN, Suit.CLUBS),
-                    new Card(Rank.THREE, Suit.HEARTS),
-                    //not needed for rigging
-                    new Card(Rank.TWO, Suit.CLUBS)
-
-            )
-
-            );
-
-    private static final ArrayList<Card> playerTwoHand =
-            new ArrayList<>(Arrays.asList(
-                    new Card(Rank.FOUR, Suit.CLUBS),
-                    new Card(Rank.TWO, Suit.HEARTS),
-                    new Card(Rank.FOUR, Suit.HEARTS),
-                    //not needed for rigging
-                    new Card(Rank.ACE, Suit.SPADES),
-                    new Card(Rank.THREE, Suit.SPADES)
-
-            )
-
-            );
-
-    private static final ArrayList<Card> playerThreeHand =
-            new ArrayList<>(Arrays.asList(
-                    //needed for rigging
-                    new Card(Rank.SEVEN, Suit.HEARTS),
-                    new Card(Rank.FIVE, Suit.CLUBS),
-                    new Card(Rank.THREE, Suit.HEARTS),
-                    new Card(Rank.FIVE, Suit.HEARTS),
-                    //not needed for rigging
-                    new Card(Rank.THREE, Suit.DIAMONDS)
-            )
-
-            );
-
-    private static final ArrayList<Card> playerFourHand =
-            new ArrayList<>(Arrays.asList(
-                    //needed for rigging
-                    new Card(Rank.QUEEN, Suit.CLUBS),
-                    new Card(Rank.ACE, Suit.HEARTS),
-                    new Card(Rank.THREE, Suit.CLUBS),
-                    //Not needed for rigging
-                    new Card(Rank.SEVEN, Suit.HEARTS),
-                    new Card(Rank.FOUR, Suit.CLUBS)
-            )
-
-            );
+    private ArrayList<Card> playerOneHand;
+    private ArrayList<Card> playerTwoHand;
+    private ArrayList<Card> playerThreeHand;
+    private ArrayList<Card> playerFourHand;
 
     @Autowired
     private Game game;
@@ -104,7 +53,7 @@ public class aceAndQueenStepDefs {
         return webElement.findElements(By.xpath("./descendant-or-self::*")).size() > 1;
     }
 
-    public boolean hasClass(WebElement element, String className) {
+    public static boolean hasCSSClass(WebElement element, String className) {
         return Arrays.asList(element.getAttribute("class").split(" ")).contains(className);
     }
 
@@ -118,36 +67,131 @@ public class aceAndQueenStepDefs {
         game.resetState();
     }
 
+    @Given("{} is being tested")
+    public void functionalityIsBeingTested(String testName) {
+        playerOneHand = new ArrayList<>();
+        playerTwoHand = new ArrayList<>();
+        playerThreeHand = new ArrayList<>();
+        playerFourHand = new ArrayList<>();
+        if(testName.equalsIgnoreCase("ace and queens functionality")){
+            playerOneHand.addAll(Arrays.asList(
+                    //needed for rigging
+                    new Card(Rank.THREE, Suit.CLUBS),
+                    new Card(Rank.ACE, Suit.HEARTS),
+                    new Card(Rank.QUEEN, Suit.CLUBS),
+                    new Card(Rank.THREE, Suit.HEARTS),
+                    //not needed for rigging
+                    new Card(Rank.TWO, Suit.CLUBS)
 
-    @Given("all players are connected and the starting card is {}")
-    public void allPlayersAreConnected(String startingCardString) throws InterruptedException {
+            ));
+
+            playerTwoHand.addAll(Arrays.asList(
+                    new Card(Rank.FOUR, Suit.CLUBS),
+                    new Card(Rank.TWO, Suit.HEARTS),
+                    new Card(Rank.FOUR, Suit.HEARTS),
+                    //not needed for rigging
+                    new Card(Rank.ACE, Suit.SPADES),
+                    new Card(Rank.THREE, Suit.SPADES)
+
+            ));
+
+            playerThreeHand.addAll(Arrays.asList(
+                    //needed for rigging
+                    new Card(Rank.SEVEN, Suit.HEARTS),
+                    new Card(Rank.FIVE, Suit.CLUBS),
+                    new Card(Rank.THREE, Suit.HEARTS),
+                    new Card(Rank.FIVE, Suit.HEARTS),
+                    //not needed for rigging
+                    new Card(Rank.THREE, Suit.DIAMONDS)
+            ));
+
+            playerFourHand.addAll((Arrays.asList(
+                    //needed for rigging
+                    new Card(Rank.QUEEN, Suit.CLUBS),
+                    new Card(Rank.ACE, Suit.HEARTS),
+                    new Card(Rank.THREE, Suit.CLUBS),
+                    //Not needed for rigging
+                    new Card(Rank.SEVEN, Suit.HEARTS),
+                    new Card(Rank.FOUR, Suit.CLUBS))
+            ));
+        }
+
+        else if(testName.equalsIgnoreCase("card playability functionality")){
+            playerOneHand.addAll(Arrays.asList(
+                    //needed for rigging
+                    new Card(Rank.KING, Suit.HEARTS),
+                    new Card(Rank.SEVEN, Suit.CLUBS),
+                    new Card(Rank.EIGHT, Suit.HEARTS),
+                    new Card(Rank.FIVE, Suit.SPADES),
+                    //not needed for rigging
+                    new Card(Rank.QUEEN, Suit.CLUBS)
+            ));
+
+            playerTwoHand.addAll(Arrays.asList(
+                    //not needed for rigging
+                    new Card(Rank.FOUR, Suit.CLUBS),
+                    new Card(Rank.TWO, Suit.HEARTS),
+                    new Card(Rank.FOUR, Suit.HEARTS),
+                    new Card(Rank.ACE, Suit.SPADES),
+                    new Card(Rank.THREE, Suit.SPADES)
+
+            ));
+
+            playerThreeHand.addAll(Arrays.asList(
+                    //not needed for rigging
+                    new Card(Rank.SEVEN, Suit.HEARTS),
+                    new Card(Rank.FIVE, Suit.CLUBS),
+                    new Card(Rank.THREE, Suit.HEARTS),
+                    new Card(Rank.FIVE, Suit.HEARTS),
+                    new Card(Rank.THREE, Suit.DIAMONDS)
+            ));
+
+            playerFourHand.addAll((Arrays.asList(
+                    //Not needed for rigging
+                    new Card(Rank.QUEEN, Suit.CLUBS),
+                    new Card(Rank.ACE, Suit.HEARTS),
+                    new Card(Rank.THREE, Suit.CLUBS),
+                    new Card(Rank.SEVEN, Suit.HEARTS),
+                    new Card(Rank.FOUR, Suit.CLUBS))
+            ));
+        }
+
         game.resetState();
         ArrayList<Card> riggedCards = new ArrayList<>();
-        Rank cardRank = Rank.valueOf(startingCardString.split("-")[0]);
-        Suit cardSuit = Suit.valueOf(startingCardString.split("-")[1]);
-        Card startingCard = new Card(cardRank, cardSuit);
-        System.out.println("Card i created in the test method: " + startingCard);
-        game.setTopCard(startingCard);
         riggedCards.addAll(playerOneHand);
         riggedCards.addAll(playerTwoHand);
         riggedCards.addAll(playerThreeHand);
         riggedCards.addAll(playerFourHand);
-        System.out.println("Rigged cards: " + riggedCards);
         Deck riggedDeck = new Deck();
         riggedDeck.setCards(riggedCards);
         game.setDeck(riggedDeck);
+    }
+
+
+    @When("the starting card is {}")
+    public void theStartingCardIs(String startingCardString) {
+        Rank cardRank = Rank.valueOf(startingCardString.split("-")[0]);
+        Suit cardSuit = Suit.valueOf(startingCardString.split("-")[1]);
+        Card startingCard = new Card(cardRank, cardSuit);
+        game.setTopCard(startingCard);
+    }
+
+
+
+    @Given("all players are connected")
+    public void allPlayersAreConnected() {
         WebDriverManager.chromedriver().setup();
         for (int i = 0; i < 4; ++i) {
             webDrivers.add(new ChromeDriver());
             WebDriver webDriver = webDrivers.get(i);
-            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
             webDriver.get(PORT_URL);
             webDriver.manage().window().maximize();
             webDriver.findElement(NAME_TEXTBOX).sendKeys("Player " + Integer.toString(i + 1));
             webDriver.findElement(JOIN_BUTTON).click();
         }
 
-        webDrivers.get(3).manage().timeouts().implicitlyWait(Duration.ofSeconds(15));
+//        webDrivers.get(3).manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         assertEquals("LEFT", webDrivers.get(3).findElement(CURRENT_GAME_DIRECTION).getText());
     }
 
@@ -164,7 +208,7 @@ public class aceAndQueenStepDefs {
             System.out.println("TEST: Current top card " + topCard.getAttribute("innerHTML"));
             System.out.println(cardString);
 
-            assertTrue(hasClass(topCard, cardString));
+            assertTrue(hasCSSClass(topCard, cardString));
         } else {
             if (playerNum == 4) {
                 ArrayList<String> playerCardSelections = new ArrayList<String>();
@@ -197,7 +241,7 @@ public class aceAndQueenStepDefs {
                 System.out.println("TEST: Top card is currently: " + topCard.getAttribute("class"));
 //                System.out.println("TEST: Checking if this was played: " + cardString);
 //            Thread.sleep(5000);
-                assertTrue(hasClass(topCard, cardString));
+                assertTrue(hasCSSClass(topCard, cardString));
             } else {
                 if (playerNum == 3) {
                     WebDriver webDriver = webDrivers.get(2);
@@ -211,7 +255,7 @@ public class aceAndQueenStepDefs {
                     System.out.println("TEST: The top card is currently: " + topCard.getAttribute("class"));
                     System.out.println("TEST: Checking if this was played: " + cardString);
 //            Thread.sleep(5000);
-                    assertTrue(hasClass(topCard, cardString));
+                    assertTrue(hasCSSClass(topCard, cardString));
                 }
             }
 
@@ -235,4 +279,17 @@ public class aceAndQueenStepDefs {
         WebElement currentGameDirection = webDriver.findElement(CURRENT_GAME_DIRECTION);
         assertEquals(newDirection.toString(), currentGameDirection.getText());
     }
+
+
+    @io.cucumber.java.en.Then("the top card should be {}")
+    public void theTopCardShouldBeCard(String cardString) {
+        Defs.Rank cardRank = Defs.Rank.valueOf(cardString.split("-")[0]);
+        Defs.Suit cardSuit = Defs.Suit.valueOf(cardString.split("-")[1]);
+        WebElement topCardDiv = webDrivers.get(0).findElement(TOP_CARD);
+        cardString = cardString.toLowerCase();
+        webDrivers.get(0).findElement(By.className(cardString)).click();
+        webDrivers.get(0).findElement(PLAY_CARD_BUTTON).click();
+        assertTrue(hasCSSClass(topCardDiv, cardString));
+    }
+
 }
