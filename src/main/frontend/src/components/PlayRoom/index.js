@@ -464,13 +464,13 @@ function PlayRoom() {
 
                 <div className='turn'>
                     <label>Turn:</label>
-                    {game.turn > 0?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
-                    :<span>Waiting for all players to join...</span>}
+                    {game.turn > 0?<span id="current-turn" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                    :<span id="current-turn">Waiting for all players to join...</span>}
                 </div>
 
                 <div className='game-direction'>
                     <label>Game Direction:</label>
-                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
+                    <span id="current-game-direction" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
                 </div>
         </div>
 

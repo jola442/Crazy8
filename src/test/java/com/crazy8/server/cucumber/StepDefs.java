@@ -39,6 +39,7 @@ public class StepDefs {
     public static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
     public static final By TOP_CARD = By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]");
     private static final By INVALID_CARD_ANNOUNCEMENT = By.xpath("//p[contains(text(),'You cannot play this card')]");
+    private static final By SUIT_TEXTBOX = By.id("suit-textbox");
     private static final By HAND = By.className("cardsList");
     private ArrayList<Card> playerOneHand;
     private ArrayList<Card> playerTwoHand;
@@ -305,11 +306,15 @@ public class StepDefs {
         assertFalse(hasCSSClass(topCard, cardString));
     }
 
-    @Then("the game should send a message saying the card is invalid")
-    public void theGameShouldSendAMessageSayingTheCardIsInvalid() {
-        boolean messageIsDisplayed = webDrivers.get(0).findElements(INVALID_CARD_ANNOUNCEMENT).size() > 0;
+    @Then("the game should send player {} a message saying the card is invalid")
+    public void theGameShouldSendAMessageSayingTheCardIsInvalid(int playerNum) {
+        boolean messageIsDisplayed = webDrivers.get(playerNum-1).findElements(INVALID_CARD_ANNOUNCEMENT).size() > 0;
         assertTrue(messageIsDisplayed);
     }
 
 
+    @Then("the game should prompt the player {} for a new suit")
+    public void theGameShouldPromptThePlayerForANewSuit(int playerNum) {
+        boolean promptIsDisplayed = webDrivers.get(playerNum-1).findElements(SUIT_TEXTBOX).size() > 0;
+    }
 }
