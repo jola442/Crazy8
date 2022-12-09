@@ -162,12 +162,33 @@ public class Game {
         System.out.println(topCard);
         if(topCard.getRank() == Rank.QUEEN){
             if(direction == Direction.LEFT){
-                turn += 1;
+                if(turn == 4){
+                    turn = 2;
+                }
+
+                else if(turn == 3){
+                    turn = 1;
+                }
+
+                else{
+                    turn += 2;
+                }
             }
 
             else{
-                turn -=1;
+                if(turn == 1){
+                    turn = 3;
+                }
+
+                else if(turn == 2){
+                    turn = 4;
+                }
+
+                else{
+                    turn -= 2;
+                }
             }
+            return turn;
         }
 
         else if(topCard.getRank() == Rank.ACE){

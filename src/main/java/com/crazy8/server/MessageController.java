@@ -159,6 +159,7 @@ public class MessageController {
                     }
 
                     else{
+                        System.out.println("CHECK: branch ran");
                         firstPlayer = game.getTurn()+2;
                         secondPlayer = game.getTurn()+3;
                     }
@@ -181,8 +182,9 @@ public class MessageController {
                     }
 
                 }
+                System.out.println("CODE: Current Turn used to compute next turn: " + game.getTurn());
                 msg += "Player " + firstPlayer + " played a QUEEN causing Player " +  secondPlayer + " to miss their turn";
-                System.out.println(msg);
+                System.out.println("CODE: " + msg);
 
             }
 
@@ -305,7 +307,8 @@ public class MessageController {
                 System.out.println("determined that the user can play");
 
                 int numCardsPlayed = 0;
-                for(Card card: player.getHand()){
+                for(int i = 0; i < player.getHand().size(); ++i){
+                    Card card = player.getHand().get(i);
                     if(numCardsPlayed == (TWO_CARD_PENALTY*game.getNumStackedTwoCards())){
                         break;
                     }
@@ -456,7 +459,8 @@ public class MessageController {
         ServerMessage response = new ServerMessage();
 
         Player player = null;
-        for(Player p: game.getPlayers()){
+        for(int i = 0; i < game.getPlayers().size(); ++i){
+            Player p = game.getPlayers().get(i);
             if(p.getName().equalsIgnoreCase(message.getName())){
                 player = p;
             }
@@ -481,7 +485,7 @@ public class MessageController {
             response = handlePlayingACard(message, player);
         }
 
-        System.out.println(response.toString());
+//        System.out.println(response.toString());
         if(player == null){
             response.setId("1");
 
