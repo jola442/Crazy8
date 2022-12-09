@@ -1,9 +1,11 @@
-Feature: Ace and Queen Card functionality
+Feature: Card Playability
   Background:
-    Given all players are connected and the starting card is KING-CLUBS
+    Given card playability functionality is being tested
 
   @Row51,52
   Scenario Outline: A player plays a valid card
+    When the starting card is KING-CLUBS
+    And all players are connected
     When player 1 plays <card>
     Then the top card should be <card>
 
@@ -14,13 +16,17 @@ Feature: Ace and Queen Card functionality
 
 
   @Row53
-  Scenario: Two players play (goes round once)
+  Scenario: A player is prompted for a new suit after playing an 8
+    When the starting card is KING-CLUBS
+    And all players are connected
     When player 1 plays EIGHT-HEARTS
     Then the game should prompt the player for a new suit
 
   @Row54
-  Scenario: Two players play (goes round twice)
-    When player 1 plays 5-SPADES
+  Scenario: A player is shown a message after playing an invalid card
+    When the starting card is KING-CLUBS
+    And all players are connected
+    When player 1 attempts to play 5-SPADES
     Then the game should send a message saying the card is invalid
 
 

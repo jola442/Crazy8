@@ -23,8 +23,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
@@ -39,7 +38,7 @@ public class StepDefs {
     public static final By CURRENT_TURN = By.id("current-turn");
     public static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
     public static final By TOP_CARD = By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]");
-
+    private static final By INVALID_CARD_ANNOUNCEMENT = By.xpath("//p[contains(text(),'You cannot play this card')]");
     private static final By HAND = By.className("cardsList");
     private ArrayList<Card> playerOneHand;
     private ArrayList<Card> playerTwoHand;
@@ -291,5 +290,26 @@ public class StepDefs {
         webDrivers.get(0).findElement(PLAY_CARD_BUTTON).click();
         assertTrue(hasCSSClass(topCardDiv, cardString));
     }
+
+    @When("player {int} attempts to play {}")
+    public void playerAttemptsToPlaySPADES(int playerNum, String cardString) {
+        WebDriver webDriver = webDrivers.get(playerNum-1);
+        cardString = cardString.toLowerCase();
+        webDriver.findElement(By.className(cardString)).click();
+        WebElement playCardButton = webDriver.findElement(PLAY_CARD_BUTTON);
+        playCardButton.click();
+        WebElement topCard = webDriver.findElement(By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]"));
+        System.out.println("TEST: Current top card " + topCard.getAttribute("innerHTML"));
+        System.out.println(cardString);
+
+        assertFalse(hasCSSClass(topCard, cardString));
+    }
+
+    @Then("the game should send a message saying the card is invalid")
+    public void theGameShouldSendAMessageSayingTheCardIsInvalid() {
+        boolean messageIsDisplayed = webDrivers.get(0).findElements(INVALID_CARD_ANNOUNCEMENT).size() > 0;
+        assertTrue(messageIsDisplayed);
+    }
+
 
 }

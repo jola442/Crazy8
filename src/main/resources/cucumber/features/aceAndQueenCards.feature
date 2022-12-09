@@ -1,10 +1,11 @@
-# new feature
-# Tags: optional
 
 Feature: Ace and Queen Card functionality
+  Background:
+    Given ace and queens functionality is being tested
 
-    Scenario Outline: One player plays
-      Given all players are connected and the starting card is EIGHT-CLUBS
+  Scenario Outline: One player plays
+      When the starting card is EIGHT-CLUBS
+      And all players are connected
       When player <current_player> plays <card>
       Then player <next_player> should play next
 
@@ -17,7 +18,8 @@ Feature: Ace and Queen Card functionality
 
   @Row42
   Scenario: Two players play (goes round once)
-    Given all players are connected and the starting card is EIGHT-HEARTS
+    When the starting card is EIGHT-HEARTS
+    And all players are connected
     When player 1 plays ACE-HEARTS
     And the game direction is now RIGHT
     And player 4 plays 7-HEARTS
@@ -25,7 +27,8 @@ Feature: Ace and Queen Card functionality
 
     @Row46
   Scenario: Two players play (goes round twice)
-    Given all players are connected and the starting card is EIGHT-HEARTS
+    When the starting card is EIGHT-HEARTS
+    And all players are connected
     When player 4 plays ACE-HEARTS
     And the game direction is now RIGHT
     And player 3 should play next
