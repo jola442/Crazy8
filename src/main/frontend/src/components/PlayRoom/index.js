@@ -1,4 +1,4 @@
-import { useEffect, useState} from 'react'
+import { useEffect, useState, useRef} from 'react'
 import DOMPurify from 'dompurify';
 import Cards from '../Cards';
 import Card from "../Card"
@@ -28,6 +28,7 @@ function PlayRoom() {
     })
 
     const [announcements, setAnnouncements] = useState([]);
+    const suitInput = useRef();
 
     useEffect(() => {
     console.log("a re-render happened");
@@ -35,7 +36,7 @@ function PlayRoom() {
       const storedPlayer = JSON.parse(sessionStorage.getItem(PLAYER_SESSION_STORAGE_KEY));
       const storedAnnouncements = JSON.parse(sessionStorage.getItem(ANNOUNCEMENTS_STORAGE_KEY));
       const storedHand = JSON.parse(sessionStorage.getItem(HAND_STORAGE_KEY));
-    
+
       if(storedGame){
         setGame(storedGame)
       }
@@ -69,7 +70,7 @@ function PlayRoom() {
       useEffect(() => {
         sessionStorage.setItem(HAND_STORAGE_KEY, JSON.stringify(hand));
       }, [hand])
-      
+
     //   useEffect( () => {
     //     console.log("Current user", user);
     //   }, [user])
@@ -83,11 +84,13 @@ function PlayRoom() {
     //     console.log("Current announcements", announcements);
     //   }, [announcements])
 
-    
+
     const handleUsername=(event)=>{
         const {value}=event.target;
         setUser({...user,"name": value});
     }
+
+
 
     function toggleSelectedCard(id){
         const newHand = [...hand];
@@ -121,12 +124,12 @@ function PlayRoom() {
         else{
             return "";
         }
-       
+
     }
 
     function encodeCard(card){
         let rank = ""
-    
+
         switch(card.rank){
             case("ace"):
                 rank = "1"
@@ -150,7 +153,7 @@ function PlayRoom() {
         else{
             return "";
         }
-    
+
     }
 
   // Networking functions
@@ -200,7 +203,7 @@ function PlayRoom() {
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-          
+
         }
     }
 
@@ -212,7 +215,7 @@ function PlayRoom() {
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-          
+
         }
     }
 
@@ -224,7 +227,20 @@ function PlayRoom() {
                 action:"UPDATE"
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
+
+        }
+    }
+
+    function sendSuit(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: suitInput.current.value,
+                action:"UPDATE"
+            };
+            suitInput.current.value = "";
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+
         }
     }
 
@@ -247,7 +263,7 @@ function PlayRoom() {
                 // const newTopCard = payloadCards[0];
                 // newTopCard.id = uuidv4();
                 // newTopCard.selected = false;
-                // newTopCard.front = true;    
+                // newTopCard.front = true;
                 // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
                 // break;
             case "UPDATE":
@@ -260,9 +276,9 @@ function PlayRoom() {
                     const newTopCard = payloadCards[0];
                     newTopCard.id = uuidv4();
                     newTopCard.selected = false;
-                    newTopCard.front = true;    
+                    newTopCard.front = true;
                     setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
-                    
+
 
                     //The server sends a message unless the top card is a starting top card
                     if(payloadData.message !== "" && payloadData.message.toLowerCase() !== "starting top card"){
@@ -272,7 +288,7 @@ function PlayRoom() {
 
                     else{
                         console.log("Not equal to starting card or '' DID NOT run with this Message:",payloadData.message);
-       
+
                         if(payloadData.currentPlayerTurn === user.name){
                             console.log("New top card rank: ", newTopCard.rank);
                             if(newTopCard.rank === "2"){
@@ -280,7 +296,7 @@ function PlayRoom() {
                                 sendTwoCardMessage();
                             }
                         }
-                    }   
+                    }
                 }
 
                 break;
@@ -298,16 +314,16 @@ function PlayRoom() {
             case "JOIN":
                 console.log("setting user ID in join....")
                 setUser( (oldUser) => ({...oldUser, ...{connected: true, id:payloadData.id}}));
-            
+
                 break;
-            case "DRAW": 
+            case "DRAW":
                 newCards = JSON.parse(payloadData.cards);
                 newCards.forEach(card => {
                     card.suit = card.suit.toLowerCase();
                     card.rank = card.rank.toLowerCase();
                     card.id = uuidv4();
                     card.selected = false;
-                    card.front = true;    
+                    card.front = true;
                 })
                 if(payloadData.message.toLowerCase().includes("you can't play up to")){
                     setHand( () => (newCards));
@@ -319,12 +335,12 @@ function PlayRoom() {
                 else{
                     setHand( (oldHand) => ([...oldHand, ...newCards]));
                 }
-       
+
                 break;
             case "PLAY":
                 console.log("setting user ID in play....")
                 setUser( (oldUser) => ({...oldUser, ...{connected: true, id:payloadData.id}}));
-              
+
                 //If an empty string was sent
                 if(payloadData.message.toLowerCase() === "no"){
                     break;
@@ -338,15 +354,15 @@ function PlayRoom() {
                         card.rank = card.rank.toLowerCase();
                         card.id = uuidv4();
                         card.selected = false;
-                        card.front = true;    
+                        card.front = true;
                     })
                     setHand(newCards);
-                    
+
                     //Update the top card if the card is played
                     if(payloadData.message.toLowerCase() === "yes"){
                         requestPublicInformation("top card");
                     }
-                  
+
                     //The game will tell if you have a card that you can play
                     else if(payloadData.message.toLowerCase().includes("you play")){
                         let newAnnouncements = payloadData.message.split("\n");
@@ -364,15 +380,15 @@ function PlayRoom() {
                         await setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                         requestPublicInformation("turn");
                     }
-               
+
                 }
 
-      
+
                 break;
             default:
                 break;
         }
-    
+
     }
 
     // const sendPublicMessage = ()=>{
@@ -383,7 +399,7 @@ function PlayRoom() {
     //             action:""
     //         };
     //         stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
-          
+
     //     }
     // }
 
@@ -395,7 +411,7 @@ function PlayRoom() {
                 action: 'DRAW',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));
-          
+
         }
     }
 
@@ -410,12 +426,17 @@ function PlayRoom() {
         }
     }
 
+
+
+
+
+
   return (
     <div className="container animate__animated">
-        {user.connected? 
+        {user.connected?
         <>
 
-        <div className='top'> 
+        <div className='top'>
             <div className='game-stats'>
                 <label>Name: </label>
                 <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(user.name)}}/>
@@ -443,13 +464,13 @@ function PlayRoom() {
 
                 <div className='turn'>
                     <label>Turn:</label>
-                    {game.turn > 0?<span id="current-turn" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
-                    :<span id="current-turn">Waiting for all players to join...</span>}
+                    {game.turn > 0?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
+                    :<span>Waiting for all players to join...</span>}
                 </div>
 
                 <div className='game-direction'>
                     <label>Game Direction:</label>
-                    <span id="current-game-direction" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
+                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.direction)}}/>
                 </div>
         </div>
 
@@ -488,14 +509,20 @@ function PlayRoom() {
 
             <div className='action-buttons'>
                 <button id='play-card-button' disabled={game.turn!==user.id} onClick={playCard}>Play Card(s)</button>
-                {/* <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button> */}
+                <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button>
+
+                {game.topCard && game.topCard.rank === "8" && <div className="select-suit">
+                    <input id="suit-textbox" ref={suitInput} placeholder = "Enter suit you want to change to"></input>
+                    <button id='send-suit-button' onClick={sendSuit}>Send</button>
+                </div>}
+
             </div>
 
         </div>
 
         </div>
 
-         
+
          <div className='bottom'>
             <div className='hand'>
                 <h2>Hand</h2>

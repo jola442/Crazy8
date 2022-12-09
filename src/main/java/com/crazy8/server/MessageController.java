@@ -192,6 +192,26 @@ public class MessageController {
                 System.out.println("Increasing num 2s by 1 for player " + game.getTurn());
                 game.setNumStackedTwoCards(game.getNumStackedTwoCards()+1);
             }
+
+            else if(message.getMessage().equalsIgnoreCase("HEARTS")){
+                System.out.println("CODE: SETTING THE TOP CARD TO HEARTS");
+                game.setTopCard(new Card(Rank.EIGHT, Suit.HEARTS));
+            }
+
+            else if(message.getMessage().equalsIgnoreCase("SPADES")){
+                System.out.println("CODE: SETTING THE TOP CARD TO HEARTS");
+                game.setTopCard(new Card(Rank.EIGHT, Suit.SPADES));
+            }
+            else if(message.getMessage().equalsIgnoreCase("DIAMONDS")){
+                System.out.println("CODE: SETTING THE TOP CARD TO DIAMONDS");
+                game.setTopCard(new Card(Rank.EIGHT, Suit.DIAMONDS));
+            }
+            else if(message.getMessage().equalsIgnoreCase("CLUBS")){
+                System.out.println("CODE: SETTING THE TOP CARD TO CLUBS");
+                game.setTopCard(new Card(Rank.EIGHT, Suit.CLUBS));
+            }
+
+
             response.setMessage(msg);
             newTopCard.add(game.getTopCard());
         }

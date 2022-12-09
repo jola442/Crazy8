@@ -1,4 +1,4 @@
-import { useEffect, useState} from 'react'
+import { useEffect, useState, useRef} from 'react'
 import DOMPurify from 'dompurify';
 import Cards from '../Cards';
 import Card from "../Card"
@@ -28,6 +28,8 @@ function PlayRoom() {
     })
 
     const [announcements, setAnnouncements] = useState([]);
+    const suitInput = useRef();
+    const [suitChosen, setSuitChosen] = useState(false);
 
     useEffect(() => {
     console.log("a re-render happened");
@@ -88,6 +90,8 @@ function PlayRoom() {
         const {value}=event.target;
         setUser({...user,"name": value});
     }
+
+
 
     function toggleSelectedCard(id){
         const newHand = [...hand];
@@ -221,6 +225,18 @@ function PlayRoom() {
             let messageToSend = {
                 name: user.name,
                 message: message,
+                action:"UPDATE"
+            };
+            stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
+          
+        }
+    }
+
+    function sendSuit(){
+        if(stompClient){
+            let messageToSend = {
+                name: user.name,
+                message: suitInput.current.value,
                 action:"UPDATE"
             };
             stompClient.send("/app/message", {}, JSON.stringify(messageToSend));
@@ -494,6 +510,12 @@ function PlayRoom() {
             <div className='action-buttons'>
                 <button id='play-card-button' disabled={game.turn!==user.id} onClick={playCard}>Play Card(s)</button>
                 <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button>
+              
+                {game.topCard && game.topCard.rank === "8" && <div className="select-suit">
+                    <input id="suit-textbox" ref={suitInput} placeholder = "Enter suit you want to change to"></input>
+                    <button id='send-suit-button' onClick={sendSuit}>Send</button>
+                </div>}
+                
             </div>
 
         </div>

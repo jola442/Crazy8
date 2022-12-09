@@ -155,3 +155,7 @@ label{
 button:disabled{
     background-color: gray;
 }
+
+.select-suit{
+    display: flex;
+}

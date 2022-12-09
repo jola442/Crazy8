@@ -292,7 +292,7 @@ public class StepDefs {
     }
 
     @When("player {int} attempts to play {}")
-    public void playerAttemptsToPlaySPADES(int playerNum, String cardString) {
+    public void playerAttemptsToPlay(int playerNum, String cardString) {
         WebDriver webDriver = webDrivers.get(playerNum-1);
         cardString = cardString.toLowerCase();
         webDriver.findElement(By.className(cardString)).click();
