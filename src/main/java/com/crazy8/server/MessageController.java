@@ -107,7 +107,7 @@ public class MessageController {
             }
 
             for(int i = 0; i < NUM_PLAYERS; ++i){
-                for(int j = 0; j < NUM_STARTING_CARDS; ++j){
+                for(int j = 0; j < game.getNumInitialCards(); ++j){
                     game.getPlayers().get(i).getHand().add(game.drawCard());
                 }
             }

@@ -16,7 +16,7 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     private int numStackedTwoCards;
-
+    private int numInitialCards;
     private List<Player> players;
     private Card topCard;
     private int turn;
@@ -35,6 +35,7 @@ public class Game {
         direction = Direction.LEFT;
         turn = 0;
         numStackedTwoCards = 0;
+        numInitialCards = 5;
     }
 
     public int getNumCards() {
@@ -87,6 +88,14 @@ public class Game {
 
     public void setNumStackedTwoCards(int numStackedTwoCards) {
         this.numStackedTwoCards = numStackedTwoCards;
+    }
+
+    public int getNumInitialCards() {
+        return numInitialCards;
+    }
+
+    public void setNumInitialCards(int numInitialCards) {
+        this.numInitialCards = numInitialCards;
     }
 
     public void updateCardCount(Card card){

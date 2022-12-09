@@ -156,6 +156,22 @@ public class StepDefs {
             ));
         }
 
+        else if(testName.equalsIgnoreCase("draw card functionality")){
+            game.setNumInitialCards(1);
+            playerOneHand.add(new Card(Rank.THREE, Suit.HEARTS));
+            //not needed for rigging
+            playerTwoHand.add(new Card(Rank.KING, Suit.HEARTS));
+            playerThreeHand.add(new Card(Rank.QUEEN, Suit.HEARTS));
+            playerFourHand.add(new Card(Rank.ACE, Suit.HEARTS));
+        }
+
+        else if(testName.equalsIgnoreCase("optional draw card functionality")){
+            playerOneHand.addAll(Arrays.asList(new Card(Rank.KING, Suit.SPADES), new Card(Rank.THREE, Suit.CLUBS)));
+            //not needed for rigging
+            playerTwoHand.add(new Card(Rank.KING, Suit.HEARTS));
+            playerThreeHand.add(new Card(Rank.QUEEN, Suit.HEARTS));
+            playerFourHand.add(new Card(Rank.ACE, Suit.HEARTS));
+        }
         game.resetState();
         ArrayList<Card> riggedCards = new ArrayList<>();
         riggedCards.addAll(playerOneHand);
@@ -195,8 +211,7 @@ public class StepDefs {
         assertEquals("LEFT", webDrivers.get(3).findElement(CURRENT_GAME_DIRECTION).getText());
     }
 
-
-    @When("player {} plays {}")
+    @When("player {int} plays {}")
     public void playerPlaysCard(int playerNum, String cardString) throws InterruptedException {
         if (playerNum == 1) {
             WebDriver webDriver = webDrivers.get(0);
@@ -316,5 +331,68 @@ public class StepDefs {
     @Then("the game should prompt the player {} for a new suit")
     public void theGameShouldPromptThePlayerForANewSuit(int playerNum) {
         boolean promptIsDisplayed = webDrivers.get(playerNum-1).findElements(SUIT_TEXTBOX).size() > 0;
+    }
+
+    @And("player {int} draws {} and plays {}")
+    public void andPlayerDrawsCardAndPlaysIt(int playerNum, String cardsList, String cardString) {
+        String[] cardArray = cardsList.split(",");
+        ArrayList<Card> riggedCards = new ArrayList<>();
+
+        for(int i = 0; i < cardArray.length; ++i){
+            Rank rank = Rank.valueOf(cardArray[i].split("-")[0]);
+            Suit suit = Suit.valueOf(cardArray[i].split("-")[1]);
+            System.out.println("testing to string: " +rank.toString());
+            riggedCards.add(new Card(rank, suit));
+        }
+
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.setDeck(riggedDeck);
+
+        webDrivers.get(playerNum-1).findElement(By.className("3-hearts")).click();
+        webDrivers.get(playerNum-1).findElement(PLAY_CARD_BUTTON).click();
+
+        //assert the cards were drawn
+        for(int i = 0; i < riggedCards.size(); ++i){
+            String rank = riggedCards.get(i).getRank().toString();
+            String suit = riggedCards.get(i).getSuit().toString().toLowerCase();
+//            System.out.println("TEST: Trying to find " + rank + "-" + suit);
+            assertTrue(webDrivers.get(playerNum-1).findElements(By.className(rank+"-"+suit)).size() > 0);
+        }
+
+        assertTrue(hasCSSClass(webDrivers.get(playerNum-1).findElement(TOP_CARD), cardString.toLowerCase()));
+
+    }
+
+
+    @Then("player {int} draws {} and can't play")
+    public void playerDrawsAndCantPlay(int playerNum, String cardsList) {
+        String[] cardArray = cardsList.split(",");
+        ArrayList<Card> riggedCards = new ArrayList<>();
+        //top card before any card was drawn
+        String currentTopCard = webDrivers.get(playerNum-1).findElement(TOP_CARD).getAttribute("class");
+
+        for(int i = 0; i < cardArray.length; ++i){
+            Rank rank = Rank.valueOf(cardArray[i].split("-")[0]);
+            Suit suit = Suit.valueOf(cardArray[i].split("-")[1]);
+            System.out.println("testing to string: " +rank.toString());
+            riggedCards.add(new Card(rank, suit));
+        }
+
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.setDeck(riggedDeck);
+
+        webDrivers.get(playerNum-1).findElement(By.className("3-hearts")).click();
+        webDrivers.get(playerNum-1).findElement(PLAY_CARD_BUTTON).click();
+
+        //assert the cards were drawn
+        for(int i = 0; i < riggedCards.size(); ++i){
+            String rank = riggedCards.get(i).getRank().toString();
+            String suit = riggedCards.get(i).getSuit().toString().toLowerCase();
+//            System.out.println("TEST: Trying to find " + rank + "-" + suit);
+            assertTrue(webDrivers.get(playerNum-1).findElements(By.className(rank+"-"+suit)).size() > 0);
+        }
+        assertEquals(currentTopCard, webDrivers.get(playerNum-1).findElement(TOP_CARD).getAttribute("class"));
     }
 }
