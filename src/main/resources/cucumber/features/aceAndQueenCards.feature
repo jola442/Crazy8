@@ -2,28 +2,32 @@
 # Tags: optional
 
 Feature: Ace and Queen Card functionality
-  Background: All players are connected
-    Given all players are connected
 
-  Scenario Outline: One player plays
-    When player <current_player> plays <card>
-    Then <next_player> should play next
+    Scenario Outline: One player plays
+      Given all players are connected and the starting card is EIGHT-CLUBS
+      When player <current_player> plays <card>
+      Then player <next_player> should play next
 
-    Examples:
-      |row|card         |current_player|next_player|
-      |41 |3-CLUBS      |1             |2          |
-      |44 |QUEEN-CLUBS  |1             |3          |
-      |45 |3-CLUBS      |4             |1          |
-      |48 |QUEEN-CLUBS  |4             |2          |
+      Examples:
+        |row|card         |current_player|next_player|
+        |41 |3-CLUBS      |1             |2          |
+        |44 |QUEEN-CLUBS  |1             |3          |
+        |45 |3-CLUBS      |4             |1          |
+        |48 |QUEEN-CLUBS  |4             |2          |
 
-
-  Scenario Outline: Two players play
-    When player <first_player> plays ACE-HEARTS
+  @Row42
+  Scenario: Two players play (goes round once)
+    Given all players are connected and the starting card is EIGHT-HEARTS
+    When player 1 plays ACE-HEARTS
     And the game direction is now RIGHT
-    And player <second_player> plays 7-HEARTS
-    Then <third_player> should play next
+    And player 4 plays 7-HEARTS
+    Then player 3 should play next
 
-    Examples:
-      |row|first_player|second_player|third_player|
-      |42 |1           |4            |3           |
-      |46 |4           |3            |2           |
+    @Row46
+  Scenario: Two players play (goes round twice)
+    Given all players are connected and the starting card is EIGHT-HEARTS
+    When player 4 plays ACE-HEARTS
+    And the game direction is now RIGHT
+    And player 3 should play next
+    And player 3 plays 7-HEARTS
+    Then player 2 should play next
