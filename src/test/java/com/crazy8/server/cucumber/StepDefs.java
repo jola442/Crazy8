@@ -9,6 +9,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.plugin.event.Node;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -35,6 +36,7 @@ public class StepDefs {
     public static final By NAME_TEXTBOX = By.id("name-textbox");
     public static final By JOIN_BUTTON = By.id("join-button");
     public static final By PLAY_CARD_BUTTON = By.id("play-card-button");
+    private static final By DRAW_CARD_BUTTON = By.id("draw-card-button");
     public static final By CURRENT_TURN = By.id("current-turn");
     public static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
     public static final By TOP_CARD = By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]");
@@ -166,11 +168,13 @@ public class StepDefs {
         }
 
         else if(testName.equalsIgnoreCase("optional draw card functionality")){
+            System.out.println("TEST: optional draw card functionality ran");
+            game.setNumInitialCards(2);
             playerOneHand.addAll(Arrays.asList(new Card(Rank.KING, Suit.SPADES), new Card(Rank.THREE, Suit.CLUBS)));
             //not needed for rigging
-            playerTwoHand.add(new Card(Rank.KING, Suit.HEARTS));
-            playerThreeHand.add(new Card(Rank.QUEEN, Suit.HEARTS));
-            playerFourHand.add(new Card(Rank.ACE, Suit.HEARTS));
+            playerTwoHand.addAll(Arrays.asList(new Card(Rank.ACE, Suit.SPADES), new Card(Rank.ACE, Suit.CLUBS)));
+            playerThreeHand.addAll(Arrays.asList(new Card(Rank.TWO, Suit.SPADES), new Card(Rank.TWO, Suit.CLUBS)));
+            playerFourHand.addAll(Arrays.asList(new Card(Rank.THREE, Suit.SPADES), new Card(Rank.THREE, Suit.CLUBS)));
         }
         game.resetState();
         ArrayList<Card> riggedCards = new ArrayList<>();
@@ -256,6 +260,7 @@ public class StepDefs {
                 System.out.println("TEST: Top card is currently: " + topCard.getAttribute("class"));
 //                System.out.println("TEST: Checking if this was played: " + cardString);
 //            Thread.sleep(5000);
+                System.out.println("TEST: Asserting " + topCard + "= " + cardString);
                 assertTrue(hasCSSClass(topCard, cardString));
             } else {
                 if (playerNum == 3) {
@@ -394,5 +399,38 @@ public class StepDefs {
             assertTrue(webDrivers.get(playerNum-1).findElements(By.className(rank+"-"+suit)).size() > 0);
         }
         assertEquals(currentTopCard, webDrivers.get(playerNum-1).findElement(TOP_CARD).getAttribute("class"));
+    }
+
+    @And("player {int} chooses to draw {} and plays it")
+    public void playerChoosesToDraw(int playerNum, String cardsList) {
+        String[] cardsArray = cardsList.split(",");
+        ArrayList<Card> riggedCards = new ArrayList<>();
+        ArrayList<Card> cardToBePlayedList = new ArrayList<>();
+
+        for(int i = 0; i < cardsArray.length; ++i){
+            Rank rank = Rank.valueOf(cardsArray[i].split("-")[0]);
+            Suit suit = Suit.valueOf(cardsArray[i].split("-")[1]);
+            System.out.println("testing to string: " +rank.toString());
+            Card card = new Card(rank, suit);
+            riggedCards.add(card);
+            if(i == cardsArray.length-1){
+                cardToBePlayedList.add(card);
+            }
+        }
+
+
+
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.setDeck(riggedDeck);
+
+        webDrivers.get(playerNum-1).findElement(DRAW_CARD_BUTTON).click();
+        System.out.println("Rigged cards: " + riggedCards);
+        String rank = cardToBePlayedList.get(0).getRank().toString();
+        String suit = cardToBePlayedList.get(0).getSuit().toString().toLowerCase();
+        String cardPlayed = rank+"-"+suit;
+
+        System.out.println("Top card that I'm asserting: " + cardPlayed);
+        assertTrue(hasCSSClass(webDrivers.get(playerNum-1).findElement(TOP_CARD), cardPlayed));
     }
 }

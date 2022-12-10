@@ -317,68 +317,92 @@ public class MessageController {
         response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
 
-        //If the top card is a 2
-        if(message.getMessage().equalsIgnoreCase("2 card")){
-            int numCardsToPlay = TWO_CARD_PENALTY * game.getNumStackedTwoCards();
-            boolean playerCanPlay = game.canPlayFromHand(player, numCardsToPlay);
-            StringBuilder msg = new StringBuilder(game.getNumStackedTwoCards() + " player(s) played a 2 \n So you have to play " + numCardsToPlay + " cards or draw " + numCardsToPlay + " cards\n");
-            if(playerCanPlay){
-                response.setAction(Action.PLAY);
-                System.out.println("determined that the user can play");
-
-                int numCardsPlayed = 0;
-                for(int i = 0; i < player.getHand().size(); ++i){
-                    Card card = player.getHand().get(i);
-                    if(numCardsPlayed == (TWO_CARD_PENALTY*game.getNumStackedTwoCards())){
-                        break;
-                    }
-                    if(game.playCard(player, card) != null){
-                        msg.append("You play a ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
-                        System.out.println(msg);
-                        numCardsPlayed++;
-                    }
-                }
-
-//                if the player's hand contains a 2
-                if(player.getHand().contains(new Card(Rank.TWO, Suit.SPADES))||
-                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
-                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
-                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))
-                ){
-                   game.setNumStackedTwoCards(game.getNumStackedTwoCards()+1);
-                }
-
-                else{
-                    game.setNumStackedTwoCards(0);
-                }
-
+        response.setAction(Action.DRAW);
+        Card drawnCard = game.drawCard(player);
+        if (drawnCard != null) {
+            System.out.println("CODE:" + drawnCard + " is drawn");
+            if(game.playCard(player,drawnCard) != null){
+                System.out.println("CODE: " + drawnCard + " can be played");
+                game.setTopCard(drawnCard);
+                response.setMessage("played");
+                game.updateTurn();
+                return response;
             }
-
-            else{
-                response.setAction(Action.DRAW);
-                msg.append("You can't play up to ").append(numCardsToPlay).append(" cards \n So");
-                System.out.println(numCardsToPlay);
-
-                for(int i = 0; i < numCardsToPlay; i++){
-                    Card card = game.drawCard(player);
-                    msg.append("you draw a(n) ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
-                }
-            }
-            response.setMessage(msg.toString());
+            ArrayList<Card> cardsToSend = new ArrayList<>();
+            cardsToSend.add(drawnCard);
+            response.setMessage("kept");
+            response.setCards(stringifyCards(cardsToSend));
         }
 
         else{
-            response.setAction(Action.DRAW);
-            Card drawnCard = game.drawCard(player);
-            if(drawnCard != null){
-                ArrayList<Card> cardsToSend = new ArrayList<>();
-                cardsToSend.add(drawnCard);
-                response.setCards(stringifyCards(cardsToSend));
-            }
+            response.setMessage("The deck is empty");
         }
-        response.setCards(stringifyCards(player.getHand()));
+
         return response;
     }
+
+        //If the top card is a 2
+//        if(message.getMessage().equalsIgnoreCase("2 card")){
+//            int numCardsToPlay = TWO_CARD_PENALTY * game.getNumStackedTwoCards();
+//            boolean playerCanPlay = game.canPlayFromHand(player, numCardsToPlay);
+//            StringBuilder msg = new StringBuilder(game.getNumStackedTwoCards() + " player(s) played a 2 \n So you have to play " + numCardsToPlay + " cards or draw " + numCardsToPlay + " cards\n");
+//            if(playerCanPlay){
+//                response.setAction(Action.PLAY);
+//                System.out.println("determined that the user can play");
+//
+//                int numCardsPlayed = 0;
+//                for(int i = 0; i < player.getHand().size(); ++i){
+//                    Card card = player.getHand().get(i);
+//                    if(numCardsPlayed == (TWO_CARD_PENALTY*game.getNumStackedTwoCards())){
+//                        break;
+//                    }
+//                    if(game.playCard(player, card) != null){
+//                        msg.append("You play a ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
+//                        System.out.println(msg);
+//                        numCardsPlayed++;
+//                    }
+//                }
+//
+////                if the player's hand contains a 2
+//                if(player.getHand().contains(new Card(Rank.TWO, Suit.SPADES))||
+//                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
+//                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))||
+//                   player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS))
+//                ){
+//                   game.setNumStackedTwoCards(game.getNumStackedTwoCards()+1);
+//                }
+//
+//                else{
+//                    game.setNumStackedTwoCards(0);
+//                }
+//
+//            }
+//
+//            else{
+//                response.setAction(Action.DRAW);
+//                msg.append("You can't play up to ").append(numCardsToPlay).append(" cards \n So");
+//                System.out.println(numCardsToPlay);
+//
+//                for(int i = 0; i < numCardsToPlay; i++){
+//                    Card card = game.drawCard(player);
+//                    msg.append("you draw a(n) ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
+//                }
+//            }
+//            response.setMessage(msg.toString());
+//        }
+//
+////        else{
+////            response.setAction(Action.DRAW);
+////            Card drawnCard = game.drawCard(player);
+////            if(drawnCard != null){
+////                ArrayList<Card> cardsToSend = new ArrayList<>();
+////                cardsToSend.add(drawnCard);
+////                response.setCards(stringifyCards(cardsToSend));
+////            }
+////        }
+//        response.setCards(stringifyCards(player.getHand()));
+//        return response;
+//    }
 
     private ServerMessage handlePlayingACard(@Payload ClientMessage message, Player player){
         ServerMessage response = new ServerMessage();
@@ -399,6 +423,8 @@ public class MessageController {
               String msg = "You cannot play this card (" + card.getRank() + " " + card.getSuit() + ")\n";
 
               int numDrawnCards = 0;
+
+
               //Draw up to 3 cards and play
                for(int i = 0; i < MAX_NUM_DRAWS_PER_TURN; ++i){
                    //If the player cannot play any card from their hand
@@ -492,10 +518,12 @@ public class MessageController {
 
         else if(message.getAction() == Action.DRAW && player != null){
             if(message.getMessage().equalsIgnoreCase("starting cards")){
+                System.out.println("CODE: STARTING CARDS WAS CALLED");
                 response = handleSendingStartingCards(message, player);
             }
 
             else{
+                System.out.println("CODE: CORRECT BRANCH CALLED");
                 response = handleSendingDrawnCard(message, player);
             }
 

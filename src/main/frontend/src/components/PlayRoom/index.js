@@ -317,6 +317,10 @@ function PlayRoom() {
 
                 break;
             case "DRAW":
+                if(payloadData.message === "played"){
+                    requestPublicInformation("top card");
+                    break;
+                }
                 newCards = JSON.parse(payloadData.cards);
                 newCards.forEach(card => {
                     card.suit = card.suit.toLowerCase();
@@ -325,16 +329,16 @@ function PlayRoom() {
                     card.selected = false;
                     card.front = true;
                 })
-                if(payloadData.message.toLowerCase().includes("you can't play up to")){
-                    setHand( () => (newCards));
-                    let newAnnouncements = payloadData.message.split("\n");
-                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                    setAnnouncements(newAnnouncements);
-                }
+//                if(payloadData.message.toLowerCase().includes("you can't play up to")){
+//                    setHand( () => (newCards));
+//                    let newAnnouncements = payloadData.message.split("\n");
+//                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+//                    setAnnouncements(newAnnouncements);
+//                }
 
-                else{
+//                else{
                     setHand( (oldHand) => ([...oldHand, ...newCards]));
-                }
+//                }
 
                 break;
             case "PLAY":
