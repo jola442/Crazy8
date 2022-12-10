@@ -255,6 +255,30 @@ public class Game {
         return canBePlayed == numCards;
     }
 
+    public int calculateScore(ArrayList<Card> playerHand){
+        int score = 0;
+        for(int i = 0; i < playerHand.size(); ++i){
+            Card card = playerHand.get(i);
+            if(card.getRank() ==  Rank.EIGHT){
+                score += 50;
+            }
+
+            else if(card.getRank() == Rank.JACK || card.getRank() == Rank.QUEEN || card.getRank() == Rank.KING){
+                score += 10;
+            }
+
+            else
+                if(card.getRank() == Rank.ACE){
+                    score += 1;
+                }
+
+                else {
+                    score += Integer.parseInt(card.getRank().toString());
+                }
+            }
+            return score;
+        }
+
     public void resetState(){
         deck = null;
         numCards = Defs.NUM_CARDS;
