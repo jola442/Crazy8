@@ -159,7 +159,11 @@ public class StepDefs {
         }
 
         else if(testName.equalsIgnoreCase("draw card functionality")){
-            game.setNumInitialCards(1);
+//            game.setNumInitialCards(1);
+            game.setNumPlayerOneInitialCards(1);
+            game.setNumPlayerTwoInitialCards(1);
+            game.setNumPlayerThreeInitialCards(1);
+            game.setNumPlayerFourInitialCards(1);
             playerOneHand.add(new Card(Rank.THREE, Suit.HEARTS));
             //not needed for rigging
             playerTwoHand.add(new Card(Rank.KING, Suit.HEARTS));
@@ -169,7 +173,10 @@ public class StepDefs {
 
         else if(testName.equalsIgnoreCase("optional draw card functionality")){
             System.out.println("TEST: optional draw card functionality ran");
-            game.setNumInitialCards(2);
+            game.setNumPlayerOneInitialCards(2);
+            game.setNumPlayerTwoInitialCards(2);
+            game.setNumPlayerThreeInitialCards(2);
+            game.setNumPlayerFourInitialCards(2);
             playerOneHand.addAll(Arrays.asList(new Card(Rank.KING, Suit.SPADES), new Card(Rank.THREE, Suit.CLUBS)));
             //not needed for rigging
             playerTwoHand.addAll(Arrays.asList(new Card(Rank.ACE, Suit.SPADES), new Card(Rank.ACE, Suit.CLUBS)));
@@ -432,5 +439,51 @@ public class StepDefs {
 
         System.out.println("Top card that I'm asserting: " + cardPlayed);
         assertTrue(hasCSSClass(webDrivers.get(playerNum-1).findElement(TOP_CARD), cardPlayed));
+    }
+
+
+    @Given("the players wish to play a single round")
+    public void thePlayersWishToPlayASingleRound() {
+        game.setNumPlayerOneInitialCards(2);
+        game.setNumPlayerTwoInitialCards(1);
+        game.setNumPlayerThreeInitialCards(5);
+        game.setNumPlayerFourInitialCards(3);
+        playerOneHand = new ArrayList<>(Arrays.asList(new Card(Rank.TWO, Suit.CLUBS), new Card(Rank.ACE, Suit.SPADES)));
+        playerTwoHand = new ArrayList<>(Arrays.asList(new Card(Rank.FOUR, Suit.CLUBS)));
+        playerThreeHand =  new ArrayList<>(Arrays.asList(new Card(Rank.EIGHT, Suit.HEARTS),
+                new Card(Rank.JACK, Suit.HEARTS),
+                new Card(Rank.SIX, Suit.HEARTS),
+                new Card(Rank.KING, Suit.HEARTS),
+                new Card(Rank.KING, Suit.SPADES)));
+        playerFourHand =  new ArrayList<>(Arrays.asList(new Card(Rank.EIGHT, Suit.CLUBS),
+                new Card(Rank.EIGHT, Suit.DIAMONDS),
+                new Card(Rank.TWO, Suit.DIAMONDS)));
+        game.resetState();
+        game.setTopCard(new Card(Rank.THREE, Suit.CLUBS));
+        ArrayList<Card> riggedCards = new ArrayList<>();
+        riggedCards.addAll(playerOneHand);
+        riggedCards.addAll(playerTwoHand);
+        riggedCards.addAll(playerThreeHand);
+        riggedCards.addAll(playerFourHand);
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.setDeck(riggedDeck);
+    }
+
+    @And("the players play their cards")
+    public void thePlayersPlayTheirCards() {
+        webDrivers.get(0).findElement(By.className("2-clubs")).click();
+        webDrivers.get(0).findElement(PLAY_CARD_BUTTON).click();
+        webDrivers.get(1).findElement(By.className("4-clubs")).click();
+        webDrivers.get(1).findElement(PLAY_CARD_BUTTON).click();
+    }
+
+
+    @Then("the game is over with players 1,2,3,4 scoring {int}, {int}, {int} and {int} respectively")
+    public void theGameIsOverWithPlayersScoringAndRespectively(int p1Score, int p2Score, int p3Score, int p4Score) {
+        assertEquals(p1Score, game.getPlayers().get(0).getScore());
+        assertEquals(p2Score, game.getPlayers().get(1).getScore());
+        assertEquals(p3Score, game.getPlayers().get(2).getScore());
+        assertEquals(p4Score, game.getPlayers().get(3).getScore());
     }
 }
