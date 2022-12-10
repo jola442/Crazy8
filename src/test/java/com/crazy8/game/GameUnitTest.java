@@ -160,4 +160,17 @@ class GameUnitTest {
         assertTrue(game.canPlayFromHand(player4, 4));
 
     }
+
+    @Test
+    public void testCalculateScore(){
+        ArrayList<Card> playerOneHand = new ArrayList<>();
+        for(int i = 0; i < Rank.values().length; i++){
+            Card card = new Card(Rank.values()[i], Suit.HEARTS);
+            playerOneHand.add(card);
+        }
+
+        int expectedScore = 1+2+3+4+5+6+7+50+9+10+10+10+10;
+
+        assertEquals(expectedScore,game.calculateScore(playerOneHand));
+    }
 }
