@@ -16,7 +16,10 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     private int numStackedTwoCards;
-    private int numInitialCards;
+    private int numPlayerOneInitialCards;
+    private int numPlayerTwoInitialCards;
+    private int numPlayerThreeInitialCards;
+    private int numPlayerFourInitialCards;
     private List<Player> players;
     private Card topCard;
     private int turn;
@@ -35,7 +38,10 @@ public class Game {
         direction = Direction.LEFT;
         turn = 0;
         numStackedTwoCards = 0;
-        numInitialCards = 5;
+        numPlayerOneInitialCards = 5;
+        numPlayerTwoInitialCards = 5;
+        numPlayerThreeInitialCards = 5;
+        numPlayerFourInitialCards = 5;
     }
 
     public int getNumCards() {
@@ -90,12 +96,36 @@ public class Game {
         this.numStackedTwoCards = numStackedTwoCards;
     }
 
-    public int getNumInitialCards() {
-        return numInitialCards;
+    public int getNumPlayerOneInitialCards() {
+        return numPlayerOneInitialCards;
     }
 
-    public void setNumInitialCards(int numInitialCards) {
-        this.numInitialCards = numInitialCards;
+    public void setNumPlayerOneInitialCards(int numPlayerOneInitialCards) {
+        this.numPlayerOneInitialCards = numPlayerOneInitialCards;
+    }
+
+    public int getNumPlayerTwoInitialCards() {
+        return numPlayerTwoInitialCards;
+    }
+
+    public void setNumPlayerTwoInitialCards(int numPlayerTwoInitialCards) {
+        this.numPlayerTwoInitialCards = numPlayerTwoInitialCards;
+    }
+
+    public int getNumPlayerThreeInitialCards() {
+        return numPlayerThreeInitialCards;
+    }
+
+    public void setNumPlayerThreeInitialCards(int numPlayerThreeInitialCards) {
+        this.numPlayerThreeInitialCards = numPlayerThreeInitialCards;
+    }
+
+    public int getNumPlayerFourInitialCards() {
+        return numPlayerFourInitialCards;
+    }
+
+    public void setNumPlayerFourInitialCards(int numPlayerFourInitialCards) {
+        this.numPlayerFourInitialCards = numPlayerFourInitialCards;
     }
 
     public void updateCardCount(Card card){
@@ -260,19 +290,23 @@ public class Game {
         for(int i = 0; i < playerHand.size(); ++i){
             Card card = playerHand.get(i);
             if(card.getRank() ==  Rank.EIGHT){
+                System.out.println("CODE: The card is an eight so adding 50");
                 score += 50;
             }
 
             else if(card.getRank() == Rank.JACK || card.getRank() == Rank.QUEEN || card.getRank() == Rank.KING){
+                System.out.println("CODE: The card is a J/Q/K so adding 10");
                 score += 10;
             }
 
             else
                 if(card.getRank() == Rank.ACE){
+                    System.out.println("CODE: The card is an ace so adding 1");
                     score += 1;
                 }
 
                 else {
+                    System.out.println("CODE: Adding " + card.getRank().toString());
                     score += Integer.parseInt(card.getRank().toString());
                 }
             }

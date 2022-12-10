@@ -106,10 +106,26 @@ public class MessageController {
                 game.placeStartingCard();
             }
 
-            for(int i = 0; i < NUM_PLAYERS; ++i){
-                for(int j = 0; j < game.getNumInitialCards(); ++j){
-                    game.getPlayers().get(i).getHand().add(game.drawCard());
-                }
+//            for(int i = 0; i < NUM_PLAYERS; ++i){
+//                for(int j = 0; j < game.getNumInitialCards(); ++j){
+//                    game.getPlayers().get(i).getHand().add(game.drawCard());
+//                }
+//            }
+
+            for(int i = 0; i < game.getNumPlayerOneInitialCards(); ++i){
+                game.getPlayers().get(0).getHand().add(game.drawCard());
+            }
+
+            for(int i = 0; i < game.getNumPlayerTwoInitialCards(); ++i){
+                game.getPlayers().get(1).getHand().add(game.drawCard());
+            }
+
+            for(int i = 0; i < game.getNumPlayerThreeInitialCards(); ++i){
+                game.getPlayers().get(2).getHand().add(game.drawCard());
+            }
+
+            for(int i = 0; i < game.getNumPlayerFourInitialCards(); ++i){
+                game.getPlayers().get(3).getHand().add(game.drawCard());
             }
 
             game.setTurn(1);
@@ -129,6 +145,20 @@ public class MessageController {
         ArrayList<Card> newTopCard = new ArrayList<>();
 
         if(game.getTopCard() != null){
+            Player winner = game.getWinner();
+            if(winner != null){
+                response.setMessage("win");
+                String p1Score = Integer.toString(game.getPlayers().get(0).getScore());
+                String p2Score = Integer.toString(game.getPlayers().get(1).getScore());
+                String p3Score = Integer.toString(game.getPlayers().get(2).getScore());
+                String p4Score = Integer.toString(game.getPlayers().get(3).getScore());
+                response.setScores(p1Score +"," + p2Score + "," + p3Score + "," + p4Score);
+                response.setMessage(winner.getName() + " has won!");
+                newTopCard.add(game.getTopCard());
+                response.setCards(stringifyCards(newTopCard));
+                return response;
+            }
+
             String msg = "";
             if(game.getTopCard().getRank() == Rank.ACE){
                 if(game.getDirection() == Direction.LEFT){
@@ -215,6 +245,8 @@ public class MessageController {
             response.setMessage(msg);
             newTopCard.add(game.getTopCard());
         }
+
+
 
         response.setCards(stringifyCards(newTopCard));
 
@@ -487,6 +519,12 @@ public class MessageController {
                 game.setTopCard(card);
                 game.updateTurn();
                 response.setMessage("yes");
+                if(player.getHand().size() == 0){
+                    for(int i = 0; i < game.getPlayers().size(); ++i){
+                        Player p = game.getPlayers().get(i);
+                        p.setScore(game.calculateScore((ArrayList<Card>) p.getHand()));
+                    }
+                }
             }
 
 

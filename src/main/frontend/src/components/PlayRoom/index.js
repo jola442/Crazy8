@@ -267,6 +267,17 @@ function PlayRoom() {
                 // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
                 // break;
             case "UPDATE":
+                if(payloadData.message.toLowerCase().includes("won")){
+                    let scores = payloadData.scores.split(",");
+                    let payloadCards = JSON.parse(payloadData.cards);
+                    const newTopCard = payloadCards[0];
+                    newTopCard.id = uuidv4();
+                    newTopCard.selected = false;
+                    newTopCard.front = true;
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction, scores:scores}}));
+                    setAnnouncements([{id:uuidv4(), message:payloadData.message}]);
+
+                }
                 if(payloadData.message.toLowerCase() === "turn"){
                     setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
                 }
