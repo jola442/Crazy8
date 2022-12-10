@@ -279,6 +279,21 @@ public class Game {
             return score;
         }
 
+    public Player getWinner(){
+        ArrayList<Integer> playersScores = new ArrayList<>();
+        for(int i = 0; i < players.size(); ++i){
+            playersScores.add(players.get(i).getScore());
+        }
+
+        int winnerScore = Collections.min(playersScores);
+        for(int i = 0; i < players.size(); ++i){
+            if(players.get(i).getScore() == winnerScore){
+                return players.get(i);
+            }
+        }
+        return null;
+    }
+
     public void resetState(){
         deck = null;
         numCards = Defs.NUM_CARDS;
