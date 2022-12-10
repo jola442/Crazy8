@@ -16,6 +16,7 @@ class GameUnitTest {
     Player player3 = new Player("Player 3");
     Player player4 = new Player("Player 4");
 
+
     @Test
     public void testDrawCard(){
         for(int i = 0; i < Defs.NUM_CARDS; ++i){
@@ -172,5 +173,15 @@ class GameUnitTest {
         int expectedScore = 1+2+3+4+5+6+7+50+9+10+10+10+10;
 
         assertEquals(expectedScore,game.calculateScore(playerOneHand));
+    }
+
+    @Test
+    public void getWinner(){
+        player1.setScore(0);
+        player2.setScore(50);
+        player3.setScore(30);
+        player4.setScore(20);
+        game.getPlayers().addAll(Arrays.asList(player1, player2, player3, player4));
+        assertEquals(player1, game.getWinner());
     }
 }
