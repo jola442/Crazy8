@@ -37,10 +37,11 @@ public class MessageController {
             }
 
             else{
-                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"}]";
+                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"}";
             }
 
         }
+        cardsString += "]";
         return cardsString;
     }
 
@@ -102,6 +103,9 @@ public class MessageController {
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         if(game.getPlayers().size() == 4){
+            System.out.println("SERVER: Round number is now 1");
+            game.setRoundNum(game.getRoundNum()+1);
+
             if(game.getTopCard() == null){
                 game.placeStartingCard();
             }
@@ -113,22 +117,21 @@ public class MessageController {
 //            }
 
             for(int i = 0; i < game.getNumPlayerOneInitialCards(); ++i){
-                game.getPlayers().get(0).getHand().add(game.drawCard());
+                game.drawCard(game.getPlayers().get(0));
             }
 
             for(int i = 0; i < game.getNumPlayerTwoInitialCards(); ++i){
-                game.getPlayers().get(1).getHand().add(game.drawCard());
+                game.drawCard(game.getPlayers().get(1));
             }
 
             for(int i = 0; i < game.getNumPlayerThreeInitialCards(); ++i){
-                game.getPlayers().get(2).getHand().add(game.drawCard());
+                game.drawCard(game.getPlayers().get(2));
             }
 
             for(int i = 0; i < game.getNumPlayerFourInitialCards(); ++i){
-                game.getPlayers().get(3).getHand().add(game.drawCard());
+                game.drawCard(game.getPlayers().get(3));
             }
 
-            game.setTurn(1);
             response.setTurnNumber(Integer.toString(game.getTurn()));
         }
         return response;
@@ -145,19 +148,28 @@ public class MessageController {
         ArrayList<Card> newTopCard = new ArrayList<>();
 
         if(game.getTopCard() != null){
-            Player winner = game.getWinner();
-            if(winner != null){
-                response.setMessage("win");
-                String p1Score = Integer.toString(game.getPlayers().get(0).getScore());
-                String p2Score = Integer.toString(game.getPlayers().get(1).getScore());
-                String p3Score = Integer.toString(game.getPlayers().get(2).getScore());
-                String p4Score = Integer.toString(game.getPlayers().get(3).getScore());
-                response.setScores(p1Score +"," + p2Score + "," + p3Score + "," + p4Score);
-                response.setMessage(winner.getName() + " has won!");
-                newTopCard.add(game.getTopCard());
-                response.setCards(stringifyCards(newTopCard));
-                return response;
+            System.out.println("SERVER: Game top card is not null");
+            System.out.println("SERVER: Round Number :" + game.getRoundNum());
+
+            if(game.isEndOfRound()){
+                Player winner = game.getWinner();
+                System.out.println("SERVER: This player is the winner: " + winner);
+                if(winner != null){
+                    String p1Score = Integer.toString(game.getPlayers().get(0).getScore());
+                    String p2Score = Integer.toString(game.getPlayers().get(1).getScore());
+                    String p3Score = Integer.toString(game.getPlayers().get(2).getScore());
+                    String p4Score = Integer.toString(game.getPlayers().get(3).getScore());
+                    response.setScores(p1Score +"," + p2Score + "," + p3Score + "," + p4Score);
+                    System.out.println("SERVER: Scores being sent to the client: " + response.getScores());
+                    response.setMessage(winner.getName() + " has won round " + game.getRoundNum() + "!");
+                    newTopCard.add(game.getTopCard());
+                    game.setEndOfRound(false);
+                    response.setCards(stringifyCards(newTopCard));
+                    return response;
+                }
             }
+
+
 
             String msg = "";
             if(game.getTopCard().getRank() == Rank.ACE){
@@ -520,9 +532,13 @@ public class MessageController {
                 game.updateTurn();
                 response.setMessage("yes");
                 if(player.getHand().size() == 0){
+                    game.setEndOfRound(true);
+                    System.out.println("SERVER: " + player.getName() + " has no more cards");
                     for(int i = 0; i < game.getPlayers().size(); ++i){
                         Player p = game.getPlayers().get(i);
-                        p.setScore(game.calculateScore((ArrayList<Card>) p.getHand()));
+                        int score = game.calculateScore(p.getHand());
+                        System.out.println("SERVER: " + p.getName() + "'s score is now");
+                        p.setScore(score);
                     }
                 }
             }

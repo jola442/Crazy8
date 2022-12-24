@@ -24,6 +24,8 @@ public class Game {
     private Card topCard;
     private int turn;
     private Direction direction;
+    private int roundNum;
+    private boolean endOfRound;
 
 
     public Game(){
@@ -36,12 +38,23 @@ public class Game {
         players = new ArrayList<>();
         topCard = null;
         direction = Direction.LEFT;
-        turn = 0;
+        turn = 1;
         numStackedTwoCards = 0;
         numPlayerOneInitialCards = 5;
         numPlayerTwoInitialCards = 5;
         numPlayerThreeInitialCards = 5;
         numPlayerFourInitialCards = 5;
+        roundNum = 0;
+        endOfRound = false;
+    }
+
+
+    public int getRoundNum() {
+        return roundNum;
+    }
+
+    public void setRoundNum(int roundNum) {
+        this.roundNum = roundNum;
     }
 
     public int getNumCards() {
@@ -180,22 +193,21 @@ public class Game {
         return newTopCard;
     }
 
-    public boolean startRound(){
-        if(numCards < 21){
-            return false;
-        }
-
-        for(Player player: players){
-            for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
-                if(drawCard(player) == null){
-                    return false;
-                }
-            }
-        }
-
-        placeStartingCard();
-        return true;
-    }
+//    public boolean startRound(){
+//        roundNum ++;
+//        deck = new Deck();
+//        for(Player player: players){
+//            player.getHand().clear();
+//            for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
+//                if(drawCard(player) == null){
+//                    return false;
+//                }
+//            }
+//        }
+//
+//        placeStartingCard();
+//        return true;
+//    }
 
     public int updateTurn(){
         System.out.println(topCard);
@@ -285,7 +297,7 @@ public class Game {
         return canBePlayed == numCards;
     }
 
-    public int calculateScore(ArrayList<Card> playerHand){
+    public int calculateScore(List<Card> playerHand){
         int score = 0;
         for(int i = 0; i < playerHand.size(); ++i){
             Card card = playerHand.get(i);
@@ -340,6 +352,8 @@ public class Game {
         direction = Direction.LEFT;
         turn = 0;
         numStackedTwoCards = 0;
+        roundNum = 0;
+        endOfRound = false;
     }
 
 
@@ -351,4 +365,11 @@ public class Game {
         return deck;
     }
 
+    public boolean isEndOfRound() {
+        return endOfRound;
+    }
+
+    public void setEndOfRound(boolean endOfRound) {
+        this.endOfRound = endOfRound;
+    }
 }

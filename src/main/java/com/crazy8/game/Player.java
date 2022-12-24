@@ -60,4 +60,15 @@ public class Player {
         this.hand = hand;
     }
 
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "name='" + name + '\'' +
+                ", score=" + score +
+                ", id=" + id +
+                ", hand=" + hand +
+                ", numCardDraws=" + numCardDraws +
+                '}';
+    }
 }

@@ -43,6 +43,10 @@ public class StepDefs {
     private static final By INVALID_CARD_ANNOUNCEMENT = By.xpath("//p[contains(text(),'You cannot play this card')]");
     private static final By SUIT_TEXTBOX = By.id("suit-textbox");
     private static final By HAND = By.className("cardsList");
+    private static final By PLAYER_ONE_SCORE = By.id("player-1-score");
+    private static final By PLAYER_TWO_SCORE = By.id("player-2-score");
+    private static final By PLAYER_THREE_SCORE = By.id("player-3-score");
+    private static final By PLAYER_FOUR_SCORE = By.id("player-4-score");
     private ArrayList<Card> playerOneHand;
     private ArrayList<Card> playerTwoHand;
     private ArrayList<Card> playerThreeHand;
@@ -343,6 +347,7 @@ public class StepDefs {
     @Then("the game should prompt the player {} for a new suit")
     public void theGameShouldPromptThePlayerForANewSuit(int playerNum) {
         boolean promptIsDisplayed = webDrivers.get(playerNum-1).findElements(SUIT_TEXTBOX).size() > 0;
+        assertTrue(promptIsDisplayed);
     }
 
     @And("player {int} draws {} and plays {}")
@@ -481,9 +486,13 @@ public class StepDefs {
 
     @Then("the game is over with players 1,2,3,4 scoring {int}, {int}, {int} and {int} respectively")
     public void theGameIsOverWithPlayersScoringAndRespectively(int p1Score, int p2Score, int p3Score, int p4Score) {
-        assertEquals(p1Score, game.getPlayers().get(0).getScore());
-        assertEquals(p2Score, game.getPlayers().get(1).getScore());
-        assertEquals(p3Score, game.getPlayers().get(2).getScore());
-        assertEquals(p4Score, game.getPlayers().get(3).getScore());
+//        assertEquals(p1Score, game.getPlayers().get(0).getScore());
+//        assertEquals(p2Score, game.getPlayers().get(1).getScore());
+//        assertEquals(p3Score, game.getPlayers().get(2).getScore());
+//        assertEquals(p4Score, game.getPlayers().get(3).getScore());
+        assertEquals(p1Score, Integer.parseInt(webDrivers.get(0).findElement(PLAYER_ONE_SCORE).getText()));
+        assertEquals(p2Score, Integer.parseInt(webDrivers.get(1).findElement(PLAYER_TWO_SCORE).getText()));
+        assertEquals(p3Score, Integer.parseInt(webDrivers.get(2).findElement(PLAYER_THREE_SCORE).getText()));
+        assertEquals(p4Score, Integer.parseInt(webDrivers.get(3).findElement(PLAYER_FOUR_SCORE).getText()));
     }
 }
