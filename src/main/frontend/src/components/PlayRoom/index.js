@@ -12,6 +12,7 @@ const GAME_SESSION_STORAGE_KEY = "crazy8.game"
 const PLAYER_SESSION_STORAGE_KEY = "crazy8.player"
 const ANNOUNCEMENTS_STORAGE_KEY = "crazy8.announcement"
 const HAND_STORAGE_KEY = "crazy8.hand"
+const TWO_CARD_PENALTY = 2;
 
 function PlayRoom() {
     const [user, setUser] = useState({
@@ -23,8 +24,9 @@ function PlayRoom() {
     const [game, setGame] = useState({
         topCard: null,
         turn: "1",
-        direction: "LEFT",
-        scores:["0","0","0","0"]
+        direction: "RIGHT",
+        scores:["0","0","0","0"],
+        numStackedTwoCards:0
     })
 
     const [announcements, setAnnouncements] = useState([]);
@@ -104,7 +106,21 @@ function PlayRoom() {
             }
         }
 
+        //only one card is selected at a time
         else if(selectedCards.length === 1){
+            //allow the player to select as many cards as they need to play to pay the two-card penalty
+            if(game.topCard.rank == 2){
+                if(game.numStackedTwoCards > 0){
+                    for(let i = 0; i < game.numStackedTwoCards*TWO_CARD_PENALTY; ++i){
+                        if(clickedCard.id === selectedCards[i].id){
+                            clickedCard.selected = !clickedCard.selected;
+                        }
+                    }
+                    setHand(newHand);
+
+                }
+            }
+
             if(clickedCard.id === selectedCards[0].id){
                 clickedCard.selected = !clickedCard.selected;
                 setHand(newHand);
@@ -244,15 +260,16 @@ function PlayRoom() {
         }
     }
 
-    const onPublicMessageReceived = async(payload) => {
+    const onPublicMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
+        console.log("Payload Data: " + payloadData)
         switch(payloadData.action){
             case "JOIN":
                 setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
                 setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
                 if(payloadData.numPlayers === "4"){
-                    await requestStartingCards();
-                    await requestPublicInformation("starting top card");
+                    requestStartingCards();
+                    requestPublicInformation("starting top card");
                 }
                 break;
             // case "DRAW":
@@ -316,7 +333,7 @@ function PlayRoom() {
         }
     }
 
-    const onPrivateMessageReceived = async(payload) => {
+    const onPrivateMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
         console.log("Received a private message!",payloadData);
         let newCards;
@@ -363,6 +380,15 @@ function PlayRoom() {
 
                 //If a card was sent
                 else{
+                    if(payloadData.message.toLowerCase().includes("You have card(s) you can play to avoid the two-card penalty")){
+                        let newAnnouncements = payloadData.message.split("\n");
+                        let twoCardsCount = Number(payloadData.numStackedTwoCards);
+                        setGame((oldGame)=>({...oldGame, ...{numStackedTwoCards:twoCardsCount}}));
+                        newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                        setAnnouncements(newAnnouncements);
+                        break;
+                    }
+
                     newCards = JSON.parse(payloadData.cards);
                     newCards.forEach(card => {
                         card.suit = card.suit.toLowerCase();
@@ -383,7 +409,7 @@ function PlayRoom() {
                         let newAnnouncements = payloadData.message.split("\n");
                         console.log("message contains 'you play'");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        await setAnnouncements(newAnnouncements)
+                        setAnnouncements(newAnnouncements)
                         requestPublicInformation("top card");
                     }
 
@@ -392,7 +418,7 @@ function PlayRoom() {
                         let newAnnouncements = payloadData.message.split("\n");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         setAnnouncements(newAnnouncements);
-                        await setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                        setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                         requestPublicInformation("turn");
                     }
 

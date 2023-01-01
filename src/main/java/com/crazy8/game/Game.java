@@ -1,6 +1,5 @@
 package com.crazy8.game;
 import com.crazy8.game.Defs.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,6 +22,7 @@ public class Game {
     private List<Player> players;
     private Card topCard;
     private int turn;
+
     private Direction direction;
     private int roundNum;
     private boolean endOfRound;
@@ -37,7 +37,7 @@ public class Game {
         numHeartsCards = Rank.values().length;
         players = new ArrayList<>();
         topCard = null;
-        direction = Direction.LEFT;
+        direction = Direction.RIGHT;
         turn = 1;
         numStackedTwoCards = 0;
         numPlayerOneInitialCards = 5;
@@ -79,6 +79,10 @@ public class Game {
 
     public List<Player> getPlayers() {
         return players;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
     }
 
     public Card getTopCard() {
@@ -141,6 +145,8 @@ public class Game {
         this.numPlayerFourInitialCards = numPlayerFourInitialCards;
     }
 
+
+
     public void updateCardCount(Card card){
         if(card.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;
@@ -184,7 +190,7 @@ public class Game {
             return null;
         }
         Card newTopCard = deck.getCards().remove(0);
-        System.out.println(deck);
+
         while(newTopCard.getRank() == Rank.EIGHT){
             Collections.shuffle(deck.getCards());
         }
@@ -210,7 +216,6 @@ public class Game {
 //    }
 
     public int updateTurn(){
-        System.out.println(topCard);
         if(topCard.getRank() == Rank.QUEEN){
             if(direction == Direction.LEFT){
                 if(turn == 4){
@@ -243,16 +248,16 @@ public class Game {
         }
 
         else if(topCard.getRank() == Rank.ACE){
-            if(direction == Direction.LEFT){
-                direction = Direction.RIGHT;
+            if(direction == Direction.RIGHT){
+                direction = Direction.LEFT;
             }
 
             else{
-                direction = Direction.LEFT;
+                direction = Direction.RIGHT;
             }
         }
 
-        if(direction == Direction.LEFT){
+        if(direction == Direction.RIGHT){
             turn += 1;
             turn = turn > 4? 1:turn;
         }
@@ -302,30 +307,26 @@ public class Game {
         for(int i = 0; i < playerHand.size(); ++i){
             Card card = playerHand.get(i);
             if(card.getRank() ==  Rank.EIGHT){
-                System.out.println("CODE: The card is an eight so adding 50");
                 score += 50;
             }
 
             else if(card.getRank() == Rank.JACK || card.getRank() == Rank.QUEEN || card.getRank() == Rank.KING){
-                System.out.println("CODE: The card is a J/Q/K so adding 10");
                 score += 10;
             }
 
             else
                 if(card.getRank() == Rank.ACE){
-                    System.out.println("CODE: The card is an ace so adding 1");
                     score += 1;
                 }
 
                 else {
-                    System.out.println("CODE: Adding " + card.getRank().toString());
                     score += Integer.parseInt(card.getRank().toString());
                 }
             }
             return score;
         }
 
-    public Player getWinner(){
+    public Player getRoundWinner(){
         ArrayList<Integer> playersScores = new ArrayList<>();
         for(int i = 0; i < players.size(); ++i){
             playersScores.add(players.get(i).getScore());
@@ -341,16 +342,17 @@ public class Game {
     }
 
     public void resetState(){
-        deck = null;
+        deck = new Deck();
+        deck.getCards().clear();
+        players = new ArrayList<>();
         numCards = Defs.NUM_CARDS;
         numSpadesCards = Rank.values().length;
         numDiamondsCards = Rank.values().length;
         numClubsCards = Rank.values().length;
         numHeartsCards = Rank.values().length;
-        players.clear();
         topCard = null;
-        direction = Direction.LEFT;
-        turn = 0;
+        direction = Direction.RIGHT;
+        turn = 1;
         numStackedTwoCards = 0;
         roundNum = 0;
         endOfRound = false;
@@ -372,4 +374,36 @@ public class Game {
     public void setEndOfRound(boolean endOfRound) {
         this.endOfRound = endOfRound;
     }
+
+    public Player getGameWinner(){
+        boolean gameIsOver = false;
+        int winnerScore = players.get(0).getScore();
+        int winnerIndex = 0;
+
+        for(int i = 0; i < players.size(); ++i){
+            int playerScore = players.get(i).getScore();
+
+            if(playerScore >= 100){
+                gameIsOver = true;
+            }
+
+            if(playerScore < winnerScore){
+                winnerScore = playerScore;
+                winnerIndex = i;
+            }
+        }
+
+        if(gameIsOver){
+            return players.get(winnerIndex);
+        }
+
+        else{
+            return null;
+        }
+
+    }
+
+
 }
+
+

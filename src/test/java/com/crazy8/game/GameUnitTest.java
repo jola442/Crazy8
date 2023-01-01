@@ -176,12 +176,12 @@ class GameUnitTest {
     }
 
     @Test
-    public void getWinner(){
+    public void testGetRoundWinner(){
         player1.setScore(0);
         player2.setScore(50);
         player3.setScore(30);
         player4.setScore(20);
         game.getPlayers().addAll(Arrays.asList(player1, player2, player3, player4));
-        assertEquals(player1, game.getWinner());
+        assertEquals(player1, game.getRoundWinner());
     }
 }

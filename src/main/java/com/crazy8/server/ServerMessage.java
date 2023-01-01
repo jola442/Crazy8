@@ -15,6 +15,8 @@ public class ServerMessage {
     private String numPlayers;
     private String currentPlayerTurn;
 
+    private String numStackedTwoCards;
+
 
 
     public ServerMessage(){
@@ -29,6 +31,7 @@ public class ServerMessage {
         id = "-1";
         numPlayers = "0";
         currentPlayerTurn = "";
+        numStackedTwoCards = "0";
     }
 
     public String getName() {
@@ -115,6 +118,7 @@ public class ServerMessage {
         this.currentPlayerTurn = currentPlayerTurn;
     }
 
+
     @Override
     public String toString() {
         return "ServerMessage{" +
@@ -129,5 +133,17 @@ public class ServerMessage {
                 ", id='" + id + '\'' +
                 ", numPlayers='" + numPlayers + '\'' +
                 '}';
+    }
+
+    public String getCurrentPlayerTurn() {
+        return currentPlayerTurn;
+    }
+
+    public String getNumStackedTwoCards() {
+        return numStackedTwoCards;
+    }
+
+    public void setNumStackedTwoCards(String numStackedTwoCards) {
+        this.numStackedTwoCards = numStackedTwoCards;
     }
 }
