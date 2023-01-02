@@ -98,38 +98,52 @@ function PlayRoom() {
         const newHand = [...hand];
         const clickedCard = newHand.find( card => card.id === id);
         const selectedCards = newHand.filter( card => card.selected);
+        console.log("top card: " + game.topCard.rank, game.topCard.suit);
+        console.log("clicked card: " + clickedCard.rank, clickedCard.suit, clickedCard.selected);
+        console.log("Selected cards");
+        selectedCards.forEach( (card) => {console.log(card)});
+        console.log("Hand");
+        hand.forEach( (card) => {console.log(card)});
+
         //if there are no selected cards
         if(selectedCards.length === 0){
             if(clickedCard){
+                console.log("Entered branch 1");
                 clickedCard.selected = !clickedCard.selected;
-                setHand(newHand);
             }
         }
 
         //only one card is selected at a time
-        else if(selectedCards.length === 1){
-            //allow the player to select as many cards as they need to play to pay the two-card penalty
-            if(game.topCard.rank == 2){
-                if(game.numStackedTwoCards > 0){
-                    for(let i = 0; i < game.numStackedTwoCards*TWO_CARD_PENALTY; ++i){
-                        if(clickedCard.id === selectedCards[i].id){
-                            clickedCard.selected = !clickedCard.selected;
-                        }
+        else if(selectedCards.length >= 1){
+            console.log("Entered branch 2");
+            if(game.topCard.rank === "2"){
+              console.log("Entered branch 3");
+                //if the player hasn't clicked as many cards as they need to play
+                //allow them to select the card
+                if(!clickedCard.selected){
+                  console.log("Entered branch 4");
+                    if(selectedCards.length < Number(game.numStackedTwoCards) * TWO_CARD_PENALTY){
+                      console.log("Entered branch 5");
+                        console.log("selectedCards.length < game.numStackedTwoCards * TWO_CARD_PENALTY")
+                        clickedCard.selected = true;
                     }
-                    setHand(newHand);
+                }
 
+                //allow the player to unselect the card
+                else{
+                    clickedCard.selected = false;
                 }
             }
 
-            if(clickedCard.id === selectedCards[0].id){
+            else if(clickedCard.id === selectedCards[0].id){
                 clickedCard.selected = !clickedCard.selected;
-                setHand(newHand);
             }
 
         }
-
-
+        setHand(newHand);
     }
+
+
 
     function getSelectedCard(){
         let selectedCard = hand.filter( card => card.selected);
@@ -357,12 +371,19 @@ function PlayRoom() {
                     card.selected = false;
                     card.front = true;
                 })
-//                if(payloadData.message.toLowerCase().includes("you can't play up to")){
-//                    setHand( () => (newCards));
-//                    let newAnnouncements = payloadData.message.split("\n");
-//                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-//                    setAnnouncements(newAnnouncements);
-//                }
+
+               if(payloadData.message.includes("You can't play up to")){
+                   let newAnnouncements = payloadData.message.split("\n");
+                   newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
+                   setAnnouncements(newAnnouncements);
+                   requestPublicInformation("top card");
+               }
+
+               else{
+                    console.log(payloadData.message + " does not include 'You can't play up to");
+                    console.log("Undefined? :" + payloadData.message.includes("You can't play up to"))
+
+               }
 
 //                else{
                     setHand( (oldHand) => ([...oldHand, ...newCards]));
@@ -380,13 +401,21 @@ function PlayRoom() {
 
                 //If a card was sent
                 else{
-                    if(payloadData.message.toLowerCase().includes("You have card(s) you can play to avoid the two-card penalty")){
+                    if(payloadData.message.includes("You have card(s) you can play to avoid the two-card penalty")){
+                        console.log("I include 'you have cards to avoid the two card penalty'");
                         let newAnnouncements = payloadData.message.split("\n");
                         let twoCardsCount = Number(payloadData.numStackedTwoCards);
                         setGame((oldGame)=>({...oldGame, ...{numStackedTwoCards:twoCardsCount}}));
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         setAnnouncements(newAnnouncements);
+
                         break;
+                    }
+
+                    else{
+                       console.log(payloadData.message + "does not include" + " You have card(s) you can play to avoid the two-card penalty");
+                       console.log("Undefined? :" + payloadData.message.includes("You can't play up to"))
+
                     }
 
                     newCards = JSON.parse(payloadData.cards);

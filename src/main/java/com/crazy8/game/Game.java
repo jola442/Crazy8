@@ -276,6 +276,14 @@ public class Game {
 
         if(topCard.getRank() == card.getRank() || topCard.getSuit() == card.getSuit() || card.getRank() == Rank.EIGHT){
             setTopCard(card);
+            if(topCard.getRank() == Rank.TWO){
+                numStackedTwoCards++;
+            }
+
+            else{
+                numStackedTwoCards = 0;
+            }
+
             player.getHand().remove(card);
             return card;
         }
