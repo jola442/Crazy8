@@ -30,6 +30,7 @@ function PlayRoom() {
     })
 
     const [announcements, setAnnouncements] = useState([]);
+    const [playOrder, setPlayOrder] = useState([]);
     const suitInput = useRef();
 
     useEffect(() => {
@@ -92,6 +93,26 @@ function PlayRoom() {
         setUser({...user,"name": value});
     }
 
+    function handlePlayOrder(card){
+        let cardIndex = playOrder.indexOf(card);
+        let newPlayOrder = [];
+
+        //only add the card if it's currently selected but not shown
+        if(card.selected && cardIndex == -1){
+            setPlayOrder( (oldPlayOrder) => ([...oldPlayOrder, card]))
+        }
+
+        //only remove the card it is shown but not currently selected
+        else if(cardIndex > -1){
+            setPlayOrder( (oldPlayOrder) => {
+                newPlayOrder = [...oldPlayOrder]
+                newPlayOrder.splice(cardIndex, 1);
+                return newPlayOrder;
+            })
+        }
+
+    }
+
 
 
     function toggleSelectedCard(id){
@@ -110,12 +131,37 @@ function PlayRoom() {
             if(clickedCard){
                 console.log("Entered branch 1");
                 clickedCard.selected = !clickedCard.selected;
+//                if(clickedCard.selected){
+//                    setSelectedCards( (oldSelectedCards) => ([...oldSelectedCards, clickedCard]))
+//                }
+//
+//                else{
+//                    setSelectedCards( (oldSelectedCards) => {
+//                        let newSelectedCards = [...oldSelectedCards]
+//                        for(let i = newSelectedCards.length-1; i >= 0; --i){
+//                            if((newSelectedCards[i].rank === clickedCard[i].rank)
+//                             && (newSelectedCards[i].suit === clickedCard[i].suit
+//                             && (newSelectedCards[i].selected === clickedCard[i].selected))){
+//                                newSelectedCards.splice(i, 1);
+//                             }
+//                        }
+//                        return newSelectedCards;
+//                    })
+//                }
             }
         }
 
-        //only one card is selected at a time
+        //only one card is selected at a time unless a 2 is the top card
         else if(selectedCards.length >= 1){
-            console.log("Entered branch 2");
+            if(selectedCards.length == 1){
+                if(game.topCard.rank !== "2"){
+                    if(clickedCard.id === selectedCards[0].id){
+                        console.log("Entered branch 2");
+                        clickedCard.selected = !clickedCard.selected;
+                    }
+                }
+            }
+
             if(game.topCard.rank === "2"){
               console.log("Entered branch 3");
                 //if the player hasn't clicked as many cards as they need to play
@@ -134,13 +180,9 @@ function PlayRoom() {
                     clickedCard.selected = false;
                 }
             }
-
-            else if(clickedCard.id === selectedCards[0].id){
-                clickedCard.selected = !clickedCard.selected;
-            }
-
         }
         setHand(newHand);
+        handlePlayOrder(clickedCard);
     }
 
 
@@ -185,6 +227,10 @@ function PlayRoom() {
         }
 
     }
+
+//    function encodeCards(){
+//        playOrder.forEach( (card) => (encodeCard(card));
+//    }
 
   // Networking functions
     const registerUser = () => {
@@ -286,17 +332,7 @@ function PlayRoom() {
                     requestPublicInformation("starting top card");
                 }
                 break;
-            // case "DRAW":
-                // if(payloadData.message){
-                //     setAnnouncements([{id:uuidv4(), message:payloadData.message}])
-                // }
-                // let payloadCards = JSON.parse(payloadData.cards);
-                // const newTopCard = payloadCards[0];
-                // newTopCard.id = uuidv4();
-                // newTopCard.selected = false;
-                // newTopCard.front = true;
-                // setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
-                // break;
+
             case "UPDATE":
                 if(payloadData.message.toLowerCase().includes("won")){
                     let scores = payloadData.scores.split(",");
@@ -387,6 +423,7 @@ function PlayRoom() {
 
 //                else{
                     setHand( (oldHand) => ([...oldHand, ...newCards]));
+                    setPlayOrder([]);
 //                }
 
                 break;
@@ -427,10 +464,12 @@ function PlayRoom() {
                         card.front = true;
                     })
                     setHand(newCards);
+                    setPlayOrder([]);
 
                     //Update the top card if the card is played
                     if(payloadData.message.toLowerCase() === "yes"){
                         requestPublicInformation("top card");
+
                     }
 
                     //The game will tell if you have a card that you can play
@@ -440,6 +479,7 @@ function PlayRoom() {
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
                         setAnnouncements(newAnnouncements)
                         requestPublicInformation("top card");
+
                     }
 
                     //If you draw up to 3 cards and still can't play
@@ -599,10 +639,22 @@ function PlayRoom() {
                 <Cards cardsList={[...hand]} toggleSelectedCard={toggleSelectedCard}/>
             </div>
 
-            <ul className="selected-card">
-                <label>Selected Card: </label>
-                {getSelectedCard()?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(getSelectedCard().rank.toUpperCase() + " " + getSelectedCard().suit.toUpperCase())}}></span>
-                :<span>Click on a card to see</span>}
+            <ul className="selected-cards">
+                <label>Card Play Order: </label>
+{/* //                {getSelectedCard()?<span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(getSelectedCard().rank.toUpperCase() + " " + getSelectedCard().suit.toUpperCase())}}></span> */}
+             {/* :<span>Click on a card to see</span>} */}
+                  {playOrder.length < 1? <span>Click on a card to see</span>
+                  :playOrder.map( (card, index) => {
+                    if(index != playOrder.length-1){
+                        return <span key={card.id} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank.toUpperCase() + " " + card.suit.toUpperCase() + "&#8594")}}/>
+                    }
+
+                    else{
+                        return <span key={card.id} dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(card.rank.toUpperCase() + " " + card.suit.toUpperCase())}}/>
+                    }
+                    }
+
+                  )}
             </ul>
          </div>
 
