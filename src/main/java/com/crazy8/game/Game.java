@@ -3,6 +3,7 @@ import com.crazy8.game.Defs.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,10 +16,12 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     private int numStackedTwoCards;
-    private int numPlayerOneInitialCards;
-    private int numPlayerTwoInitialCards;
-    private int numPlayerThreeInitialCards;
-    private int numPlayerFourInitialCards;
+//    private int numPlayerOneInitialCards;
+//    private int numPlayerTwoInitialCards;
+//    private int numPlayerThreeInitialCards;
+//    private int numPlayerFourInitialCards;
+//
+    private ArrayList<Integer> numPlayerInitialCards;
     private List<Player> players;
     private Card topCard;
     private int turn;
@@ -38,12 +41,13 @@ public class Game {
         players = new ArrayList<>();
         topCard = null;
         direction = Direction.RIGHT;
-        turn = 1;
+        turn = 0;
         numStackedTwoCards = 0;
-        numPlayerOneInitialCards = 5;
-        numPlayerTwoInitialCards = 5;
-        numPlayerThreeInitialCards = 5;
-        numPlayerFourInitialCards = 5;
+//        numPlayerOneInitialCards = 5;
+//        numPlayerTwoInitialCards = 5;
+//        numPlayerThreeInitialCards = 5;
+//        numPlayerFourInitialCards = 5;
+        numPlayerInitialCards = new ArrayList(Arrays.asList(5,5,5,5));
         roundNum = 0;
         endOfRound = false;
     }
@@ -105,6 +109,11 @@ public class Game {
         return direction;
     }
 
+
+    public void setDirection(Direction direction) {
+        this.direction = direction;
+    }
+
     public int getNumStackedTwoCards() {
         return numStackedTwoCards;
     }
@@ -113,39 +122,64 @@ public class Game {
         this.numStackedTwoCards = numStackedTwoCards;
     }
 
-    public int getNumPlayerOneInitialCards() {
-        return numPlayerOneInitialCards;
+    public ArrayList<Integer> getNumPlayerInitialCards() {
+        return numPlayerInitialCards;
     }
 
-    public void setNumPlayerOneInitialCards(int numPlayerOneInitialCards) {
-        this.numPlayerOneInitialCards = numPlayerOneInitialCards;
-    }
-
-    public int getNumPlayerTwoInitialCards() {
-        return numPlayerTwoInitialCards;
-    }
-
-    public void setNumPlayerTwoInitialCards(int numPlayerTwoInitialCards) {
-        this.numPlayerTwoInitialCards = numPlayerTwoInitialCards;
-    }
-
-    public int getNumPlayerThreeInitialCards() {
-        return numPlayerThreeInitialCards;
-    }
-
-    public void setNumPlayerThreeInitialCards(int numPlayerThreeInitialCards) {
-        this.numPlayerThreeInitialCards = numPlayerThreeInitialCards;
-    }
-
-    public int getNumPlayerFourInitialCards() {
-        return numPlayerFourInitialCards;
-    }
-
-    public void setNumPlayerFourInitialCards(int numPlayerFourInitialCards) {
-        this.numPlayerFourInitialCards = numPlayerFourInitialCards;
+    public void setNumPlayerInitialCards(ArrayList<Integer> numPlayerInitialCards) {
+        this.numPlayerInitialCards = numPlayerInitialCards;
     }
 
 
+
+    //    public int getNumPlayerOneInitialCards() {
+//        return numPlayerOneInitialCards;
+//    }
+//
+//    public void setNumPlayerOneInitialCards(int numPlayerOneInitialCards) {
+//        this.numPlayerOneInitialCards = numPlayerOneInitialCards;
+//    }
+//
+//    public int getNumPlayerTwoInitialCards() {
+//        return numPlayerTwoInitialCards;
+//    }
+//
+//    public void setNumPlayerTwoInitialCards(int numPlayerTwoInitialCards) {
+//        this.numPlayerTwoInitialCards = numPlayerTwoInitialCards;
+//    }
+//
+//    public int getNumPlayerThreeInitialCards() {
+//        return numPlayerThreeInitialCards;
+//    }
+//
+//    public void setNumPlayerThreeInitialCards(int numPlayerThreeInitialCards) {
+//        this.numPlayerThreeInitialCards = numPlayerThreeInitialCards;
+//    }
+//
+//    public int getNumPlayerFourInitialCards() {
+//        return numPlayerFourInitialCards;
+//    }
+//
+//    public void setNumPlayerFourInitialCards(int numPlayerFourInitialCards) {
+//        this.numPlayerFourInitialCards = numPlayerFourInitialCards;
+//    }
+//
+
+    public void setDeck(Deck deck) {
+        this.deck = deck;
+    }
+
+    public Deck getDeck() {
+        return deck;
+    }
+
+    public boolean isEndOfRound() {
+        return endOfRound;
+    }
+
+    public void setEndOfRound(boolean endOfRound) {
+        this.endOfRound = endOfRound;
+    }
 
     public void updateCardCount(Card card){
         if(card.getSuit() == Suit.DIAMONDS){
@@ -199,21 +233,7 @@ public class Game {
         return newTopCard;
     }
 
-//    public boolean startRound(){
-//        roundNum ++;
-//        deck = new Deck();
-//        for(Player player: players){
-//            player.getHand().clear();
-//            for(int i = 0; i < Defs.NUM_STARTING_CARDS; ++i){
-//                if(drawCard(player) == null){
-//                    return false;
-//                }
-//            }
-//        }
-//
-//        placeStartingCard();
-//        return true;
-//    }
+
 
     public int updateTurn(){
         if(topCard.getRank() == Rank.QUEEN){
@@ -267,6 +287,20 @@ public class Game {
             turn = turn < 1?4:turn;
         }
         return turn;
+    }
+
+    public void updateRoundScores(){
+        for(int i = 0; i < players.size(); ++i){
+            Player player = players.get(i);
+            player.setRoundScore(calculateScore(player.getHand()));
+        }
+    }
+    public void updateGameScores(){
+        for(int i = 0; i < players.size(); ++i){
+            Player player = players.get(i);
+            player.setGameScore(player.getGameScore()+player.getRoundScore());
+            player.setRoundScore(0);
+        }
     }
 
     public Card playCard(Player player, Card card){
@@ -334,18 +368,41 @@ public class Game {
             return score;
         }
 
+
     public Player getRoundWinner(){
         ArrayList<Integer> playersScores = new ArrayList<>();
         for(int i = 0; i < players.size(); ++i){
-            playersScores.add(players.get(i).getScore());
+            playersScores.add(players.get(i).getRoundScore());
         }
 
         int winnerScore = Collections.min(playersScores);
         for(int i = 0; i < players.size(); ++i){
-            if(players.get(i).getScore() == winnerScore){
+            if(players.get(i).getRoundScore() == winnerScore){
                 return players.get(i);
             }
         }
+        return null;
+    }
+
+    public Player getGameWinner(){
+        ArrayList<Integer> playersScores = new ArrayList<>();
+        for(int i = 0; i < players.size(); ++i){
+            playersScores.add(players.get(i).getGameScore());
+        }
+
+        boolean gameHasWinner = Collections.max(playersScores) >= 100;
+
+        if(!gameHasWinner){
+            return null;
+        }
+
+        int winnerScore = Collections.min(playersScores);
+        for(int i = 0; i < players.size(); ++i){
+            if(players.get(i).getGameScore() == winnerScore){
+                return players.get(i);
+            }
+        }
+
         return null;
     }
 
@@ -364,51 +421,6 @@ public class Game {
         numStackedTwoCards = 0;
         roundNum = 0;
         endOfRound = false;
-    }
-
-
-    public void setDeck(Deck deck) {
-        this.deck = deck;
-    }
-
-    public Deck getDeck() {
-        return deck;
-    }
-
-    public boolean isEndOfRound() {
-        return endOfRound;
-    }
-
-    public void setEndOfRound(boolean endOfRound) {
-        this.endOfRound = endOfRound;
-    }
-
-    public Player getGameWinner(){
-        boolean gameIsOver = false;
-        int winnerScore = players.get(0).getScore();
-        int winnerIndex = 0;
-
-        for(int i = 0; i < players.size(); ++i){
-            int playerScore = players.get(i).getScore();
-
-            if(playerScore >= 100){
-                gameIsOver = true;
-            }
-
-            if(playerScore < winnerScore){
-                winnerScore = playerScore;
-                winnerIndex = i;
-            }
-        }
-
-        if(gameIsOver){
-            return players.get(winnerIndex);
-        }
-
-        else{
-            return null;
-        }
-
     }
 
 

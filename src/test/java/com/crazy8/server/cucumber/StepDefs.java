@@ -205,8 +205,8 @@ public class StepDefs {
         WebDriver webDriver = webDrivers.get(playerNum-1);
 
         for(int i = 0; i < cardArray.length; ++i){
-            Rank rank = Rank.valueOf(cardArray[i].split("-")[0]);
-            Suit suit = Suit.valueOf(cardArray[i].split("-")[1]);
+            Rank rank = Rank.valueOf(cardArray[i].split("-")[0].strip());
+            Suit suit = Suit.valueOf(cardArray[i].split("-")[1].strip());
             riggedCards.add(new Card(rank, suit));
         }
 
@@ -277,20 +277,21 @@ public class StepDefs {
         }
 
         game.getDeck().getCards().addAll(riggedCards);
-        switch(playerNum){
-            case(1):
-                game.setNumPlayerOneInitialCards(riggedCards.size());
-                break;
-            case(2):
-                game.setNumPlayerTwoInitialCards(riggedCards.size());
-                break;
-            case(3):
-                game.setNumPlayerThreeInitialCards(riggedCards.size());
-                break;
-            case(4):
-                game.setNumPlayerFourInitialCards(riggedCards.size());
-                break;
-        }
+        game.getNumPlayerInitialCards().set(playerNum-1, riggedCards.size());
+//        switch(playerNum){
+//            case(1):
+//                game.setNumPlayerOneInitialCards(riggedCards.size());
+//                break;
+//            case(2):
+//                game.setNumPlayerTwoInitialCards(riggedCards.size());
+//                break;
+//            case(3):
+//                game.setNumPlayerThreeInitialCards(riggedCards.size());
+//                break;
+//            case(4):
+//                game.setNumPlayerFourInitialCards(riggedCards.size());
+//                break;
+//        }
 
     }
 
@@ -317,15 +318,14 @@ public class StepDefs {
     }
 
     @And("player {int} avoids the two-card penalty by playing {}")
-    public void playerAvoidsTheTwoCardPenaltyByPlaying(int playerNum, String firstCard, String secondCard) {
+    public void playerAvoidsTheTwoCardPenaltyByPlaying(int playerNum, String cardsList) {
         WebDriver webDriver = webDrivers.get(playerNum-1);
-        firstCard = firstCard.toLowerCase();
-        secondCard = secondCard.toLowerCase();
-        webDriver.findElement(By.className(firstCard)).click();
+        String[] cardsArr = cardsList.split(",");
         WebElement playCardButton = webDriver.findElement(PLAY_CARD_BUTTON);
-        playCardButton.click();
 
-        webDriver.findElement(By.className(secondCard)).click();
+        for(int i = 0; i < cardsArr.length; ++i){
+            webDriver.findElement(By.className(cardsArr[i].toLowerCase().strip())).click();
+        }
         playCardButton.click();
     }
 
@@ -338,6 +338,18 @@ public class StepDefs {
     @And("the cards at the top of the stockpile are {}")
     public void theCardsAtTheTopOfTheStockpileAre(String cardsList) {
         //add them in reverse order because the top of the deck is the last element in the deck arraylist
+        String[] cardsArray = cardsList.strip().split(",");
+        ArrayList<Card> riggedCards = new ArrayList<>();
+
+        for(int i = cardsArray.length-1; i >= 0; --i){
+            Rank rank = Rank.valueOf(cardsArray[i].strip().split("-")[0]);
+            Suit suit = Suit.valueOf(cardsArray[i].strip().split("-")[1]);
+            Card card = new Card(rank, suit);
+            riggedCards.add(card);
+        }
+
+        game.getDeck().getCards().addAll(riggedCards);
+
     }
 
     @And("player {int} suffers the two-card penalty, drawing {int} cards from the top of the stockpile and {}")
@@ -345,8 +357,8 @@ public class StepDefs {
         //empty because the server controls this behaviour
     }
 
-    @But("player {int}'s turn is not over so they draw {} and play {}")
-    public void playerSTurnIsNotOverSoTheyDraw(int playerNum, String cardsDrawn, String cardPlayed) {
+    @But("player {int}'s turn is not over so they draw {}")
+    public void playerSTurnIsNotOverSoTheyDraw(int playerNum, String playString){
         //empty because the server controls this behaviour
     }
 }

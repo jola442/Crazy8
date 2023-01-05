@@ -228,9 +228,22 @@ function PlayRoom() {
 
     }
 
-//    function encodeCards(){
-//        playOrder.forEach( (card) => (encodeCard(card));
-//    }
+   function encodeCards(){
+        let cardObjects = playOrder.map( (card) => (encodeCard(card)));
+        let cardsToSend = "";
+        cardObjects.forEach( (card, index) => {
+            if(index == cardObjects.length-1){
+                cardsToSend += card;
+            }
+
+            else{
+                cardsToSend += card+",";
+            }
+            
+        })
+        console.log("Cards to send: ", cardsToSend);
+        return cardsToSend;
+   }
 
   // Networking functions
     const registerUser = () => {
@@ -342,7 +355,12 @@ function PlayRoom() {
                     newTopCard.selected = false;
                     newTopCard.front = true;
                     setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction, scores:scores}}));
-                    setAnnouncements([{id:uuidv4(), message:payloadData.message}]);
+                    let newAnnouncement ={id:uuidv4(), message:payloadData.message};
+                    setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, newAnnouncement]));
+                    if(payloadData.message.toLowerCase().includes("has won round")){
+                        requestStartingCards();
+                    }
+                    }
 
                 }
                 if(payloadData.message.toLowerCase() === "turn"){
@@ -361,7 +379,8 @@ function PlayRoom() {
                     //The server sends a message unless the top card is a starting top card
                     if(payloadData.message !== "" && payloadData.message.toLowerCase() !== "starting top card"){
                         console.log("Not equal to starting card or '' ran with this Message:",payloadData.message);
-                        setAnnouncements([{id:uuidv4(), message:payloadData.message}]);
+                         let newAnnouncement ={id:uuidv4(), message:payloadData.message};
+                         setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, newAnnouncement]));
                     }
 
                     else{
@@ -411,7 +430,7 @@ function PlayRoom() {
                if(payloadData.message.includes("You can't play up to")){
                    let newAnnouncements = payloadData.message.split("\n");
                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                   setAnnouncements(newAnnouncements);
+                   setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
                    requestPublicInformation("top card");
                }
 
@@ -444,7 +463,7 @@ function PlayRoom() {
                         let twoCardsCount = Number(payloadData.numStackedTwoCards);
                         setGame((oldGame)=>({...oldGame, ...{numStackedTwoCards:twoCardsCount}}));
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements(newAnnouncements);
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
 
                         break;
                     }
@@ -477,7 +496,7 @@ function PlayRoom() {
                         let newAnnouncements = payloadData.message.split("\n");
                         console.log("message contains 'you play'");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements(newAnnouncements)
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
                         requestPublicInformation("top card");
 
                     }
@@ -486,7 +505,7 @@ function PlayRoom() {
                     else{
                         let newAnnouncements = payloadData.message.split("\n");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements(newAnnouncements);
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
                         setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
                         requestPublicInformation("turn");
                     }
@@ -529,7 +548,8 @@ function PlayRoom() {
         if(stompClient){
             let messageToSend = {
                 name: user.name,
-                message: encodeCard(getSelectedCard()),
+                // message: encodeCard(getSelectedCard()),
+                message: encodeCards(),
                 action: 'PLAY',
             };
             stompClient.send("/app/private-message", {}, JSON.stringify(messageToSend));

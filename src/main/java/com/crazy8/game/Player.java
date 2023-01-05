@@ -8,14 +8,17 @@ import java.util.List;
 @Component
 public class Player {
     private String name;
-    private int score;
+    private int roundScore;
+
+    private int gameScore;
     private int id;
     private List<Card> hand;
     private int numCardDraws;
 
     public Player(String name) {
         this.name = name;
-        score = 0;
+        roundScore = 0;
+        gameScore = 0;
         hand = new ArrayList<>();
         id = -1;
         numCardDraws = 0;
@@ -23,7 +26,8 @@ public class Player {
 
     public Player(){
         name = "";
-        score = 0;
+        roundScore = 0;
+        gameScore = 0;
         id = -1;
         hand = new ArrayList<>();
     }
@@ -36,12 +40,12 @@ public class Player {
         this.name = name;
     }
 
-    public int getScore() {
-        return score;
+    public int getRoundScore() {
+        return roundScore;
     }
 
-    public void setScore(int score) {
-        this.score = score;
+    public void setRoundScore(int roundScore) {
+        this.roundScore = roundScore;
     }
 
     public int getId() {
@@ -60,12 +64,20 @@ public class Player {
         this.hand = hand;
     }
 
+    public int getGameScore() {
+        return gameScore;
+    }
+
+    public void setGameScore(int gameScore) {
+        this.gameScore = gameScore;
+    }
 
     @Override
     public String toString() {
         return "Player{" +
                 "name='" + name + '\'' +
-                ", score=" + score +
+                ", roundScore=" + roundScore +
+                ", gameScore=" + gameScore +
                 ", id=" + id +
                 ", hand=" + hand +
                 ", numCardDraws=" + numCardDraws +

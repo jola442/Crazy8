@@ -25,23 +25,23 @@ public class MessageController {
     private Game game;
 
     public String stringifyCards(List<Card> cards){
-        String cardsString = "[";
+        StringBuilder cardsString = new StringBuilder("[");
         for(int i = 0; i < cards.size(); ++i){
             Card card = cards.get(i);
             String cardSuit = card.getSuit().toString();
             String cardRank = card.getRank().toString();
 
             if(i < cards.size()-1){
-                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"},";
+                cardsString.append("{\"suit\": \"").append(cardSuit).append("\", \"rank\": \"").append(cardRank).append("\"},");
             }
 
             else{
-                cardsString +="{\"suit\": \"" + cardSuit+ "\", \"rank\": \""+ cardRank  +"\"}";
+                cardsString.append("{\"suit\": \"").append(cardSuit).append("\", \"rank\": \"").append(cardRank).append("\"}");
             }
 
         }
-        cardsString += "]";
-        return cardsString;
+        cardsString.append("]");
+        return cardsString.toString();
     }
 
     public Card decodeCard(String cardFromClient){
@@ -63,22 +63,51 @@ public class MessageController {
             cardRank = Rank.values()[cardRankInt-1];
             suitIndex = 1;
         }
-        switch (cardFromClient.charAt(suitIndex)){
-            case 'H':
-                cardSuit = Suit.HEARTS;
-                break;
-            case 'S':
-                cardSuit = Suit.SPADES;
-                break;
-            case 'D':
-                cardSuit = Suit.DIAMONDS;
-                break;
-            case 'C':
-                cardSuit = Suit.CLUBS;
-                break;
+        switch (cardFromClient.charAt(suitIndex)) {
+            case 'H' -> cardSuit = Suit.HEARTS;
+            case 'S' -> cardSuit = Suit.SPADES;
+            case 'D' -> cardSuit = Suit.DIAMONDS;
+            case 'C' -> cardSuit = Suit.CLUBS;
         }
         
         return new Card(cardRank, cardSuit);
+
+    }
+
+    public ArrayList<Card> decodeCards(String cardsFromClient){
+        String[] cardsListString = cardsFromClient.trim().split(",");
+        ArrayList<Card> cards = new ArrayList<>();
+
+        for(int i = 0; i < cardsListString.length; ++i){
+            cards.add(decodeCard(cardsListString[i]));
+        }
+
+        return cards;
+    }
+
+    public void startNewRound(){
+        game.setRoundNum(game.getRoundNum()+1);
+        game.setDirection(Direction.RIGHT);
+
+        //The player that played after the first player in the previous round plays first in the new round
+        game.setTurn(game.getRoundNum() % 4);
+        if(game.getTurn() == 0){
+            game.setTurn(4);
+        }
+
+        if(game.getTopCard() == null){
+            game.placeStartingCard();
+        }
+
+        for(int i = 0; i < game.getPlayers().size(); ++i){
+            game.getPlayers().get(i).getHand().clear();
+        }
+
+        for(int i = 0; i < game.getNumPlayerInitialCards().size(); ++i){
+            for(int j = 0; j < game.getNumPlayerInitialCards().get(i); ++j){
+                game.drawCard(game.getPlayers().get(i));
+            }
+        }
 
     }
 
@@ -101,34 +130,7 @@ public class MessageController {
 
         if(game.getPlayers().size() == 4){
             System.out.println("CODE: Round number is now 1");
-            game.setRoundNum(game.getRoundNum()+1);
-
-            if(game.getTopCard() == null){
-                game.placeStartingCard();
-            }
-
-//            for(int i = 0; i < NUM_PLAYERS; ++i){
-//                for(int j = 0; j < game.getNumInitialCards(); ++j){
-//                    game.getPlayers().get(i).getHand().add(game.drawCard());
-//                }
-//            }
-
-            for(int i = 0; i < game.getNumPlayerOneInitialCards(); ++i){
-                game.drawCard(game.getPlayers().get(0));
-            }
-
-            for(int i = 0; i < game.getNumPlayerTwoInitialCards(); ++i){
-                game.drawCard(game.getPlayers().get(1));
-            }
-
-            for(int i = 0; i < game.getNumPlayerThreeInitialCards(); ++i){
-                game.drawCard(game.getPlayers().get(2));
-            }
-
-            for(int i = 0; i < game.getNumPlayerFourInitialCards(); ++i){
-                game.drawCard(game.getPlayers().get(3));
-            }
-
+            startNewRound();
             response.setTurnNumber(Integer.toString(game.getTurn()));
         }
         return response;
@@ -144,7 +146,7 @@ public class MessageController {
         response.setDirection(game.getDirection());
 
         ArrayList<Card> newTopCard = new ArrayList<>();
-        String msg = "";
+        StringBuilder msg = new StringBuilder();
         if(game.getTopCard() != null){
             System.out.println("CODE: Game top card is not null");
             System.out.println("CODE: Round Number :" + game.getRoundNum());
@@ -153,24 +155,37 @@ public class MessageController {
                 Player roundWinner = game.getRoundWinner();
                 System.out.println("CODE: This player is the winner: " + roundWinner);
                 if(roundWinner != null){
-                    String p1Score = Integer.toString(game.getPlayers().get(0).getScore());
-                    String p2Score = Integer.toString(game.getPlayers().get(1).getScore());
-                    String p3Score = Integer.toString(game.getPlayers().get(2).getScore());
-                    String p4Score = Integer.toString(game.getPlayers().get(3).getScore());
-                    response.setScores(p1Score +"," + p2Score + "," + p3Score + "," + p4Score);
-                    System.out.println("CODE: Scores being sent to the client: " + response.getScores());
-                    msg += roundWinner.getName() + " has won round " + game.getRoundNum() + "!";
-                    newTopCard.add(game.getTopCard());
+                    game.updateRoundScores();
+                    game.updateGameScores();
+                    startNewRound();
                     game.setEndOfRound(false);
+                    String[] playerScores = new String[game.getPlayers().size()];
+
+                    for(int i = 0; i < playerScores.length; ++i){
+                        playerScores[i] =  Integer.toString(game.getPlayers().get(i).getGameScore());
+                        if(i < playerScores.length-1){
+                            msg.append(playerScores[i] + ",");
+                        }
+
+                        else{
+                            msg.append(playerScores);
+                        }
+                    }
+
+                    response.setScores(msg.toString());
+                    System.out.println("CODE: Scores being sent to the client: " + response.getScores());
+                    msg.append(roundWinner.getName() + " has won round " + game.getRoundNum() + "!");
+                    newTopCard.add(game.getTopCard());
+
                     response.setCards(stringifyCards(newTopCard));
                 }
 
                 Player gameWinner = game.getGameWinner();
                 if(gameWinner != null){
-                    msg += gameWinner.getName() + " has won the game!";
+                    msg.append(gameWinner.getName()).append(" has won the game!");
                 }
 
-                response.setMessage(msg);
+                response.setMessage(msg.toString());
 
                 return response;
             }
@@ -179,12 +194,12 @@ public class MessageController {
             if(game.getTopCard().getRank() == Rank.ACE){
                 if(game.getDirection() == Direction.RIGHT){
                     int playerNumber = game.getTurn() == 1?4:game.getTurn()-1;
-                    msg += "Player " + playerNumber + " changed the direction from " + Direction.LEFT + " to " + Direction.RIGHT + " by playing an ACE";
+                    msg.append("Player ").append(playerNumber).append(" changed the direction from ").append(Direction.LEFT).append(" to ").append(Direction.RIGHT).append(" by playing an ACE");
                 }
 
                 else{
                     int playerNumber = game.getTurn() == 4?1:game.getTurn()+1;
-                    msg += "Player " + playerNumber + " changed the direction from " + Direction.RIGHT + " to " + Direction.LEFT + " by playing an ACE";
+                    msg.append("Player ").append(playerNumber).append(" changed the direction from ").append(Direction.RIGHT).append(" to ").append(Direction.LEFT).append(" by playing an ACE");
                 }
 
             }
@@ -228,7 +243,7 @@ public class MessageController {
 
                 }
 
-                msg += "Player " + firstPlayer + " played a QUEEN causing Player " +  secondPlayer + " to miss their turn";
+                msg.append("Player ").append(firstPlayer).append(" played a QUEEN causing Player ").append(secondPlayer).append(" to miss their turn");
                 System.out.println("CODE: " + msg);
 
             }
@@ -252,7 +267,7 @@ public class MessageController {
             }
 
 
-            response.setMessage(msg);
+            response.setMessage(msg.toString());
             System.out.println("CODE: Setting the top card to " + game.getTopCard());
             newTopCard.add(game.getTopCard());
         }
@@ -318,7 +333,7 @@ public class MessageController {
 //            }
         }
 
-        if(game.getTurn()-1 <= game.getPlayers().size()-1){
+        if(game.getTurn() >= 1 && game.getTurn()-1 <= game.getPlayers().size()-1){
             response.setCurrentPlayerTurn(game.getPlayers().get(game.getTurn()-1).getName());
         }
 //        if(game.getPlayers().size() > 4 && game.getTurn() == 4){
@@ -464,100 +479,151 @@ public class MessageController {
         }
 
         else{
-            Card card = decodeCard(message.getMessage());
+            ArrayList<Card> cards = decodeCards(message.getMessage());
+            //If the player is only requesting to play 1 card (always the case except when a player can avoid the 2-card penalty)
+            if(cards.size() == 1){
 
-            System.out.println("CODE: Player " + game.getTurn() + " plays a " + card);
+                Card card =  decodeCard(message.getMessage());
 
+                if(game.getTopCard().getRank() == Rank.TWO && card.getRank() != Rank.TWO){
+                    response.setMessage("If you are playing only 1 card, it must be a 2 \n You have card(s) you can play to avoid the two-card penalty");
+                    response.setCards(stringifyCards(player.getHand()));
+                    response.setDirection(game.getDirection());
+                    response.setTurnNumber(Integer.toString(game.getTurn()));
+                    return response;
+                }
 
-            //If the selected card cannot be played
-            if(game.playCard(player, card) == null){
-              String msg = "You cannot play this card (" + card.getRank() + " " + card.getSuit() + ")\n";
-
-              int numDrawnCards = 0;
-
-
-              //Draw up to 3 cards and play
-               for(int i = 0; i < MAX_NUM_DRAWS_PER_TURN; ++i){
-                   //If the player cannot play any card from their hand
-                   if(!game.canPlayFromHand(player)){
-                       Card newCard = game.drawCard(player);
-                       //Check if the player successfully draws a card
-                       if(newCard != null){
-                           msg += "You cannot play any other card from your hand \n So you draw a(n) " + newCard.getRank().toString() + " " + newCard.getSuit() + "\n";
-                           numDrawnCards++;
-                       }
-
-                       else{
-                           msg += "There are no cards left to draw\n";
-                       }
-
-                   }
-
-                   //If the player can play a card from their hand
-                   else{
-                       //If they can play because they drew a card, they must play the card
-                       if(numDrawnCards >= 1){
-                           int handSize = player.getHand().size();
-                           Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
-                           if(cardPlayed!= null){
-                               msg += "You play a(n) " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
-                               game.updateTurn();
-                               break;
-                           }
-                       }
-
-                       else{
-                           msg += "You have a card you can play, pick that instead\n";
-                           //Otherwise they are free to play a valid card if they already had it
-                           break;
-                       }
-
-                   }
-               }
-
-                System.out.println("CODE: Num drawn cards: "+numDrawnCards);
-
-               //If after 3 draws, the player can play a card, play it. Update the turn regardless
-               if(numDrawnCards == 3){
-                   if(game.canPlayFromHand(player)){
-                       int handSize = player.getHand().size();
-                       Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
-                       if(cardPlayed != null){
-                           msg += "You play a(n) " + cardPlayed.getRank() + " " + cardPlayed.getSuit() + "\n";
-                       }
-                   }
-
-                   game.updateTurn();
-               }
+                System.out.println("CODE: Player " + game.getTurn() + " plays a " + card);
 
 
-                response.setMessage(msg);
+                //If the selected card cannot be played
+                if(game.playCard(player, card) == null){
+                    StringBuilder msg = new StringBuilder("You cannot play this card (" + card.getRank() + " " + card.getSuit() + ")\n");
+
+                    int numDrawnCards = 0;
+
+
+                    //Draw up to 3 cards and play
+                    for(int i = 0; i < MAX_NUM_DRAWS_PER_TURN; ++i){
+                        //If the player cannot play any card from their hand
+                        if(!game.canPlayFromHand(player)){
+                            Card newCard = game.drawCard(player);
+                            //Check if the player successfully draws a card
+                            if(newCard != null){
+                                msg.append("You cannot play any other card from your hand \n So you draw a(n) ").append(newCard.getRank().toString()).append(" ").append(newCard.getSuit()).append("\n");
+                                numDrawnCards++;
+                            }
+
+                            else{
+                                msg.append("There are no cards left to draw\n");
+                            }
+
+                        }
+
+                        //If the player can play a card from their hand
+                        else{
+                            //If they can play because they drew a card, they must play the card
+                            if(numDrawnCards >= 1){
+                                int handSize = player.getHand().size();
+                                Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
+                                if(cardPlayed!= null){
+                                    msg.append("You play a(n) ").append(cardPlayed.getRank()).append(" ").append(cardPlayed.getSuit()).append("\n");
+                                    game.updateTurn();
+                                    break;
+                                }
+                            }
+
+                            else{
+                                msg.append("You have a card you can play, pick that instead\n");
+                                //Otherwise they are free to play a valid card if they already had it
+                                break;
+                            }
+
+                        }
+                    }
+
+                    System.out.println("CODE: Num drawn cards: "+numDrawnCards);
+
+                    //If after 3 draws, the player can play a card, play it. Update the turn regardless
+                    if(numDrawnCards == 3){
+                        if(game.canPlayFromHand(player)){
+                            int handSize = player.getHand().size();
+                            Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
+                            if(cardPlayed != null){
+                                msg.append("You play a(n) ").append(cardPlayed.getRank()).append(" ").append(cardPlayed.getSuit()).append("\n");
+                            }
+                        }
+
+                        game.updateTurn();
+                    }
+
+
+                    response.setMessage(msg.toString());
+
+                }
+                else{
+                    game.updateTurn();
+                    response.setMessage("yes");
+                    if(player.getHand().size() == 0){
+                        game.setEndOfRound(true);
+                        System.out.println("CODE: " + player.getName() + " has no more cards");
+
+                    }
+                    System.out.println("CODE: Played a " + card);
+                }
 
             }
+
+            //The UI only allows users to send multiple cards if the top card is a 2
             else{
-                game.setTopCard(card);
-                game.updateTurn();
-                response.setMessage("yes");
-                if(player.getHand().size() == 0){
-                    game.setEndOfRound(true);
-                    System.out.println("CODE: " + player.getName() + " has no more cards");
-                    for(int i = 0; i < game.getPlayers().size(); ++i){
-                        Player p = game.getPlayers().get(i);
-                        int score = game.calculateScore(p.getHand());
-                        System.out.println("CODE: " + p.getName() + "'s score is now");
-                        p.setScore(score);
+                Card currentTopCard = game.getTopCard();
+                //Checking if the set of cards can be played in the specified order
+                for(int i = 0; i < cards.size(); ++i){
+                    Card currentCard = cards.get(i);
+                    //if the current card can't be played on the current top card
+                    if(currentCard.getRank() != currentTopCard.getRank() && currentCard.getSuit() != currentTopCard.getSuit() && currentCard.getRank() != Rank.EIGHT){
+                        response.setMessage("You can't play the cards in that order. Try a different one.");
+                        response.setDirection(game.getDirection());
+                        response.setTurnNumber(Integer.toString(game.getTurn()));
+                        return response;
+                    }
+
+                    else{
+                        currentTopCard = currentCard;
                     }
                 }
-                System.out.println("CODE: Played a " + card);
+
+                //Playing the cards
+                for(int i = 0; i < cards.size(); ++i){
+                    if(game.playCard(player, cards.get(i)) != null){
+                        System.out.println("CODE: Successfully played " + cards.get(i));
+                    }
+
+                    else{
+                        System.out.println("CODE: Unable to play " + cards.get(i));
+                    }
+                }
+
+                if(player.getHand().size() == 0){
+                    game.updateTurn();
+                    game.setEndOfRound(true);
+                    System.out.println("CODE: " + player.getName() + " has no more cards");
+//                    for(int i = 0; i < game.getPlayers().size(); ++i){
+//                        Player p = game.getPlayers().get(i);
+//                        int score = game.calculateScore(p.getHand());
+//                        System.out.println("CODE: " + p.getName() + "'s score is now");
+//                        p.setRoundScore(score);
+//                    }
+
+                }
+
+
+                response.setMessage("yes");
             }
 
-
-
             response.setCards(stringifyCards(player.getHand()));
-
             response.setDirection(game.getDirection());
             response.setTurnNumber(Integer.toString(game.getTurn()));
-
         }
         return response;
     }

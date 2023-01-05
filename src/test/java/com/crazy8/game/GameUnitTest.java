@@ -5,7 +5,6 @@ import com.crazy8.game.Defs.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -177,10 +176,10 @@ class GameUnitTest {
 
     @Test
     public void testGetRoundWinner(){
-        player1.setScore(0);
-        player2.setScore(50);
-        player3.setScore(30);
-        player4.setScore(20);
+        player1.setRoundScore(0);
+        player2.setRoundScore(50);
+        player3.setRoundScore(30);
+        player4.setRoundScore(20);
         game.getPlayers().addAll(Arrays.asList(player1, player2, player3, player4));
         assertEquals(player1, game.getRoundWinner());
     }
