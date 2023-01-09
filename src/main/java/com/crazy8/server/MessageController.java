@@ -1,5 +1,6 @@
 package com.crazy8.server;
 import com.crazy8.game.Card;
+import com.crazy8.game.Deck;
 import com.crazy8.game.Player;
 import com.crazy8.game.Game;
 import com.crazy8.server.Defs.Action;
@@ -87,21 +88,40 @@ public class MessageController {
 
     public void startNewRound(){
         game.setRoundNum(game.getRoundNum()+1);
+
+        if(game.getRiggedDecks().size() >= game.getRoundNum()){
+            Deck riggedDeck = game.getRiggedDecks().get(game.getRoundNum()-1);
+            game.setDeck(riggedDeck);
+        }
+
+        else{
+//            Deck newDeck = new Deck();
+//            game.getDeck().getCards().clear();
+//            game.getDeck().getCards().addAll(newDeck.getCards());
+        }
+
         game.setDirection(Direction.RIGHT);
 
-        //The player that played after the first player in the previous round plays first in the new round
-        game.setTurn(game.getRoundNum() % 4);
-        if(game.getTurn() == 0){
-            game.setTurn(4);
+        if(game.getRoundNum() != 1){
+            //The player that played after the first player in the previous round plays first in the new round
+            game.setTurn(game.getRoundNum() % 4);
+            if(game.getTurn() == 0){
+                game.setTurn(4);
+            }
         }
+
+
 
         if(game.getTopCard() == null){
             game.placeStartingCard();
         }
 
         for(int i = 0; i < game.getPlayers().size(); ++i){
+            game.getPlayers().get(i).setRoundScore(0);
             game.getPlayers().get(i).getHand().clear();
         }
+
+//        game.setDeck(new Deck());
 
         for(int i = 0; i < game.getNumPlayerInitialCards().size(); ++i){
             for(int j = 0; j < game.getNumPlayerInitialCards().get(i); ++j){
@@ -109,14 +129,23 @@ public class MessageController {
             }
         }
 
+
     }
 
-    private ServerMessage handleUserJoining(@Payload ClientMessage message){
+    public ServerMessage initResponse(ClientMessage message){
         ServerMessage response = new ServerMessage();
         response.setName(message.getName());
         response.setTurnNumber(Integer.toString(game.getTurn()));
         response.setDirection(game.getDirection());
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
+        response.setNumCardsDrawn(Integer.toString(game.getNumCardsDrawn()));
+        response.setAction(message.getAction());
+        response.setRoundNum(Integer.toString(game.getRoundNum()));
+        return response;
+    }
+
+    private ServerMessage handleUserJoining(@Payload ClientMessage message){
+        ServerMessage response = initResponse(message);
 
         //Creating the player model
         Player player = new Player(message.getName());
@@ -138,45 +167,53 @@ public class MessageController {
 
     private ServerMessage handleSendingTopCard(@Payload ClientMessage message){
         System.out.println("CODE: Handle sending top card was called");
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
-        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
-        response.setAction(Action.UPDATE);
-        response.setDirection(game.getDirection());
+        ServerMessage response = initResponse(message);
 
         ArrayList<Card> newTopCard = new ArrayList<>();
         StringBuilder msg = new StringBuilder();
         if(game.getTopCard() != null){
+            if(message.getMessage().equalsIgnoreCase("hearts") ||
+                    message.getMessage().equalsIgnoreCase("spades") ||
+                    message.getMessage().equalsIgnoreCase("diamonds") ||
+                    message.getMessage().equalsIgnoreCase("clubs")){
+                game.setTopCard(new Card(Rank.EIGHT, Suit.valueOf(message.getMessage().toUpperCase())));
+                msg.append("Player " + game.getTurn() + " declared " + message.getMessage() + " as the next suit");
+                game.updateTurn();
+                response = initResponse(message);
+            }
+            newTopCard.add(game.getTopCard());
             System.out.println("CODE: Game top card is not null");
             System.out.println("CODE: Round Number :" + game.getRoundNum());
 
             if(game.isEndOfRound()){
+                game.updateRoundScores();
+                game.updateGameScores();
                 Player roundWinner = game.getRoundWinner();
                 System.out.println("CODE: This player is the winner: " + roundWinner);
+                StringBuilder scores = new StringBuilder();
                 if(roundWinner != null){
-                    game.updateRoundScores();
-                    game.updateGameScores();
+                    msg.append(roundWinner.getName() + " has won round " + game.getRoundNum() + "!\n");
                     startNewRound();
+
+                    //Updating the response with the new game values
+                    response = initResponse(message);
                     game.setEndOfRound(false);
                     String[] playerScores = new String[game.getPlayers().size()];
 
                     for(int i = 0; i < playerScores.length; ++i){
                         playerScores[i] =  Integer.toString(game.getPlayers().get(i).getGameScore());
+                        System.out.println("CODE: player hand after reset" + game.getPlayers().get(i).getHand());
                         if(i < playerScores.length-1){
-                            msg.append(playerScores[i] + ",");
+                            scores.append(playerScores[i] + ",");
                         }
 
                         else{
-                            msg.append(playerScores);
+                            scores.append(playerScores[i]);
                         }
                     }
 
-                    response.setScores(msg.toString());
+                    response.setScores(scores.toString());
                     System.out.println("CODE: Scores being sent to the client: " + response.getScores());
-                    msg.append(roundWinner.getName() + " has won round " + game.getRoundNum() + "!");
-                    newTopCard.add(game.getTopCard());
-
                     response.setCards(stringifyCards(newTopCard));
                 }
 
@@ -248,25 +285,6 @@ public class MessageController {
 
             }
 
-            else if(message.getMessage().equalsIgnoreCase("HEARTS")){
-                System.out.println("CODE: SETTING THE TOP CARD TO HEARTS");
-                game.setTopCard(new Card(Rank.EIGHT, Suit.HEARTS));
-            }
-
-            else if(message.getMessage().equalsIgnoreCase("SPADES")){
-                System.out.println("CODE: SETTING THE TOP CARD TO HEARTS");
-                game.setTopCard(new Card(Rank.EIGHT, Suit.SPADES));
-            }
-            else if(message.getMessage().equalsIgnoreCase("DIAMONDS")){
-                System.out.println("CODE: SETTING THE TOP CARD TO DIAMONDS");
-                game.setTopCard(new Card(Rank.EIGHT, Suit.DIAMONDS));
-            }
-            else if(message.getMessage().equalsIgnoreCase("CLUBS")){
-                System.out.println("CODE: SETTING THE TOP CARD TO CLUBS");
-                game.setTopCard(new Card(Rank.EIGHT, Suit.CLUBS));
-            }
-
-
             response.setMessage(msg.toString());
             System.out.println("CODE: Setting the top card to " + game.getTopCard());
             newTopCard.add(game.getTopCard());
@@ -281,24 +299,10 @@ public class MessageController {
     }
 
     private ServerMessage handleSendingStartingTopCard(@Payload ClientMessage message){
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
-        response.setNumPlayers(Integer.toString(game.getPlayers().size()));
-        response.setDirection(game.getDirection());
-        response.setMessage(message.getMessage());
+        ServerMessage response = initResponse(message);
 
         ArrayList<Card> newTopCard = new ArrayList<>();
         newTopCard.add(game.getTopCard());
-//        if(game.getTopCard() == null){
-//            newTopCard.add(game.placeStartingCard());
-//        }
-//
-//        else{
-//            newTopCard.add(game.getTopCard());
-//        }
-
-        response.setAction(Action.UPDATE);
         response.setCards(stringifyCards(newTopCard));
         System.out.println("CODE: Sending the starting top card to all players " + newTopCard);
 
@@ -315,9 +319,8 @@ public class MessageController {
 
         else if(message.getAction() == Action.UPDATE){
             if(message.getMessage().equalsIgnoreCase("turn")){
+                response = initResponse(message);
                 response.setMessage(message.getMessage());
-                response.setTurnNumber(Integer.toString(game.getTurn()));
-                response.setAction(Action.UPDATE);
             }
 
             else if(message.getMessage().equalsIgnoreCase("starting top card")){
@@ -328,31 +331,17 @@ public class MessageController {
                 response = handleSendingTopCard(message);
             }
 
-//            else if(message.getMessage().equalsIgnoreCase("top card")){
-//                response.setCards(stringifyCards(new ArrayList<>(game.getTopCard())));
-//            }
         }
 
         if(game.getTurn() >= 1 && game.getTurn()-1 <= game.getPlayers().size()-1){
             response.setCurrentPlayerTurn(game.getPlayers().get(game.getTurn()-1).getName());
         }
-//        if(game.getPlayers().size() > 4 && game.getTurn() == 4){
-//            response.setCurrentPlayerTurn(game.getPlayers().get(game.getTurn()-1).getName());
-//        }
-//
-//        else if(game.getPlayers().size() > 1 && game.getTurn() > 0){
-//            response.setCurrentPlayerTurn(game.getPlayers().get(game.getTurn()-1).getName());
-//        }
 
         return response;
     }
 
     public ServerMessage handleSendingUserID(@Payload ClientMessage message, Player player){
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
-        response.setDirection(game.getDirection());
-        response.setAction(Action.JOIN);
+        ServerMessage response = initResponse(message);
         if(player == null){
             response.setId(Integer.toString(game.getPlayers().size()+1));
         }
@@ -365,11 +354,7 @@ public class MessageController {
     }
 
     private  ServerMessage handleSendingStartingCards(@Payload ClientMessage message, Player player) {
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
-        response.setDirection(game.getDirection());
-        response.setAction(Action.DRAW);
+        ServerMessage response = initResponse(message);
 
         System.out.println("CODE: Sending starting cards to " + player.getName() + ": " + player.getHand());
         response.setCards(stringifyCards(player.getHand()));
@@ -378,18 +363,19 @@ public class MessageController {
     }
 
     private ServerMessage handleSendingDrawnCard(@Payload ClientMessage message, Player player) {
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
-        response.setDirection(game.getDirection());
+        ServerMessage response = initResponse(message);
 
-        response.setAction(Action.DRAW);
         Card drawnCard = game.drawCard(player);
         if (drawnCard != null) {
+            game.setNumCardsDrawn(game.getNumCardsDrawn()+1);
             System.out.println("CODE:" + drawnCard + " is drawn");
             if(game.playCard(player,drawnCard) != null){
+                if(game.getTopCard().getRank() == Rank.EIGHT){
+                    response.setSelectSuit("true");
+                    response.setMessage("played");
+                    return response;
+                }
                 System.out.println("CODE: " + drawnCard + " can be played");
-                game.setTopCard(drawnCard);
                 response.setMessage("played");
                 game.updateTurn();
                 return response;
@@ -398,6 +384,7 @@ public class MessageController {
             cardsToSend.add(drawnCard);
             response.setMessage("kept");
             response.setCards(stringifyCards(cardsToSend));
+            response.setNumCardsDrawn(Integer.toString(game.getNumCardsDrawn()));
         }
 
         else{
@@ -409,10 +396,7 @@ public class MessageController {
 
 
     private ServerMessage handleTwoCardAsTopCard(@Payload ClientMessage message, Player player) {
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setDirection(game.getDirection());
-        response.setTurnNumber(Integer.toString(game.getTurn()));
+        ServerMessage response = initResponse(message);
 
         int numCardsToPlay = TWO_CARD_PENALTY * game.getNumStackedTwoCards();
         boolean playerCanPlay = game.canPlayFromHand(player, numCardsToPlay);
@@ -447,6 +431,15 @@ public class MessageController {
                 for(int i = 0; i < player.getHand().size(); ++i){
                     Card card = player.getHand().get(i);
                     if(game.playCard(player, card) != null){
+                        if(game.getTopCard().getRank() == Rank.EIGHT){
+                            msg.append("you play a(n) ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
+                            response.setSelectSuit("true");
+                            response.setMessage(msg.toString());
+                            response.setAction(Action.PLAY);
+                            response.setTurnNumber(Integer.toString(game.getTurn()));
+                            response.setCards(stringifyCards(player.getHand()));
+                            return response;
+                        }
                         response.setAction(Action.PLAY);
                         msg.append("you play a(n) ").append(card.getRank()).append(" ").append(card.getSuit()).append("\n");
                         game.updateTurn();
@@ -469,9 +462,7 @@ public class MessageController {
 }
 
     private ServerMessage handlePlayingACard(@Payload ClientMessage message, Player player){
-        ServerMessage response = new ServerMessage();
-        response.setName(message.getName());
-        response.setAction(Action.PLAY);
+        ServerMessage response = initResponse(message);
 
 
         if(message.getMessage().equalsIgnoreCase("")){
@@ -528,6 +519,14 @@ public class MessageController {
                                 Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
                                 if(cardPlayed!= null){
                                     msg.append("You play a(n) ").append(cardPlayed.getRank()).append(" ").append(cardPlayed.getSuit()).append("\n");
+                                    if(game.getTopCard().getRank() == Rank.EIGHT){
+                                        response.setSelectSuit("true");
+                                        response.setMessage(msg.toString());
+                                        response.setCards(stringifyCards(player.getHand()));
+                                        response.setDirection(game.getDirection());
+                                        response.setTurnNumber(Integer.toString(game.getTurn()));
+                                        return response;
+                                    }
                                     game.updateTurn();
                                     break;
                                 }
@@ -551,6 +550,12 @@ public class MessageController {
                             Card cardPlayed = game.playCard(player, player.getHand().get(handSize-1));
                             if(cardPlayed != null){
                                 msg.append("You play a(n) ").append(cardPlayed.getRank()).append(" ").append(cardPlayed.getSuit()).append("\n");
+                                //ask the player for a suit if the last card they drew was an 8
+                                if(game.getTopCard().getRank() == Rank.EIGHT){
+                                    response.setSelectSuit("true");
+                                    response.setMessage(msg.toString());
+                                    return response;
+                                }
                             }
                         }
 
@@ -562,7 +567,14 @@ public class MessageController {
 
                 }
                 else{
-                    game.updateTurn();
+                    if(game.getTopCard().getRank() == Rank.EIGHT){
+                        response.setSelectSuit("true");
+                    }
+
+                    else{
+                        game.updateTurn();
+                    }
+
                     response.setMessage("yes");
                     if(player.getHand().size() == 0){
                         game.setEndOfRound(true);
@@ -596,6 +608,11 @@ public class MessageController {
                 //Playing the cards
                 for(int i = 0; i < cards.size(); ++i){
                     if(game.playCard(player, cards.get(i)) != null){
+                        if(i == cards.size()-1){
+                            if(game.getTopCard().getRank() == Rank.EIGHT){
+                                response.setSelectSuit("true");
+                            }
+                        }
                         System.out.println("CODE: Successfully played " + cards.get(i));
                     }
 
@@ -607,6 +624,7 @@ public class MessageController {
                 if(player.getHand().size() == 0){
                     game.updateTurn();
                     game.setEndOfRound(true);
+                    response.setSelectSuit("false");
                     System.out.println("CODE: " + player.getName() + " has no more cards");
 //                    for(int i = 0; i < game.getPlayers().size(); ++i){
 //                        Player p = game.getPlayers().get(i);
@@ -663,6 +681,8 @@ public class MessageController {
         else if(message.getAction() == Action.PLAY){
             response = handlePlayingACard(message, player);
         }
+
+
 
 //        System.out.println(response.toString());
         if(player == null){

@@ -11,7 +11,7 @@ Feature: Determining who plays next
       When the top card is SIX-CLUBS
       And player <current_player> is to play first
       And all players are connected
-      When player <current_player> plays <card>
+      And player <current_player> plays <card>
       Then player <next_player> should play next
 
       Examples:
@@ -26,7 +26,7 @@ Feature: Determining who plays next
     When the top card is SIX-HEARTS
     And player 1 is to play first
     And all players are connected
-    When player 1 plays ACE-HEARTS
+    And player 1 plays ACE-HEARTS
     And the game direction is now LEFT
     And player 4 is the next to play
     And player 4 plays 7-HEARTS
@@ -37,7 +37,7 @@ Feature: Determining who plays next
     When the top card is SIX-HEARTS
     And player 4 is to play first
     And all players are connected
-    When player 4 plays ACE-HEARTS
+    And player 4 plays ACE-HEARTS
     And the game direction is now LEFT
     And player 3 should play next
     And player 3 plays 7-HEARTS

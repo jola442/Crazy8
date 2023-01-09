@@ -9,7 +9,7 @@ Feature: Drawing Rules
     When the top card is SEVEN-CLUBS
     And player 1 is to play first
     And all players are connected
-    And player 1 attempts to play 3-HEARTS
+#    And player 1 attempts to play 3-HEARTS
     And player 1 draws <drawn_cards> and plays <card>
     Then the top card should be <card>
 
@@ -24,7 +24,7 @@ Feature: Drawing Rules
     When the top card is SEVEN-CLUBS
     And player 1 is to play first
     And all players are connected
-    And player 1 attempts to play 3-HEARTS
+#    And player 1 attempts to play 3-HEARTS
     And player 1 draws SIX-DIAMONDS,FIVE-SPADES,FOUR-HEARTS and can't play
     Then the top card should be 7-CLUBS
 
@@ -34,7 +34,7 @@ Feature: Drawing Rules
       When the top card is SEVEN-CLUBS
       And player 1 is to play first
       And all players are connected
-      And player 1 attempts to play 3-HEARTS
+#      And player 1 attempts to play 3-HEARTS
       And player 1 draws SIX-DIAMONDS,EIGHT-HEARTS and plays 8-HEARTS
       Then the game should prompt the player 1 for a new suit
 

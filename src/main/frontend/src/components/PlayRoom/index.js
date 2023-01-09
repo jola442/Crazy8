@@ -26,7 +26,10 @@ function PlayRoom() {
         turn: "1",
         direction: "RIGHT",
         scores:["0","0","0","0"],
-        numStackedTwoCards:0
+        numStackedTwoCards:0,
+        numCardsDrawn:0,
+        roundNum:0,
+        canSelectSuit: false
     })
 
     const [announcements, setAnnouncements] = useState([]);
@@ -96,10 +99,18 @@ function PlayRoom() {
     function handlePlayOrder(card){
         let cardIndex = playOrder.indexOf(card);
         let newPlayOrder = [];
+   
 
         //only add the card if it's currently selected but not shown
         if(card.selected && cardIndex == -1){
-            setPlayOrder( (oldPlayOrder) => ([...oldPlayOrder, card]))
+            if(game.topCard.rank !== "2"){
+                setPlayOrder( (oldPlayOrder) => ([card]))
+            }
+
+            else{
+                setPlayOrder( (oldPlayOrder) => ([...oldPlayOrder, card]))
+            }
+   
         }
 
         //only remove the card it is shown but not currently selected
@@ -118,7 +129,7 @@ function PlayRoom() {
     function toggleSelectedCard(id){
         const newHand = [...hand];
         const clickedCard = newHand.find( card => card.id === id);
-        const selectedCards = newHand.filter( card => card.selected);
+        const selectedCards = newHand.filter( card => card.selected);       
         console.log("top card: " + game.topCard.rank, game.topCard.suit);
         console.log("clicked card: " + clickedCard.rank, clickedCard.suit, clickedCard.selected);
         console.log("Selected cards");
@@ -131,23 +142,6 @@ function PlayRoom() {
             if(clickedCard){
                 console.log("Entered branch 1");
                 clickedCard.selected = !clickedCard.selected;
-//                if(clickedCard.selected){
-//                    setSelectedCards( (oldSelectedCards) => ([...oldSelectedCards, clickedCard]))
-//                }
-//
-//                else{
-//                    setSelectedCards( (oldSelectedCards) => {
-//                        let newSelectedCards = [...oldSelectedCards]
-//                        for(let i = newSelectedCards.length-1; i >= 0; --i){
-//                            if((newSelectedCards[i].rank === clickedCard[i].rank)
-//                             && (newSelectedCards[i].suit === clickedCard[i].suit
-//                             && (newSelectedCards[i].selected === clickedCard[i].selected))){
-//                                newSelectedCards.splice(i, 1);
-//                             }
-//                        }
-//                        return newSelectedCards;
-//                    })
-//                }
             }
         }
 
@@ -155,19 +149,27 @@ function PlayRoom() {
         else if(selectedCards.length >= 1){
             if(selectedCards.length == 1){
                 if(game.topCard.rank !== "2"){
+                    //if you click a card that is already selected, it should be unselected
                     if(clickedCard.id === selectedCards[0].id){
                         console.log("Entered branch 2");
                         clickedCard.selected = !clickedCard.selected;
                     }
+
+                    //if you click a card that isn't selected, the current selected card should be unselected
+                    else{
+                        selectedCards[0].selected = false;
+                        clickedCard.selected = true;
+                    }
                 }
+
             }
 
             if(game.topCard.rank === "2"){
-              console.log("Entered branch 3");
+             
                 //if the player hasn't clicked as many cards as they need to play
                 //allow them to select the card
                 if(!clickedCard.selected){
-                  console.log("Entered branch 4");
+           
                     if(selectedCards.length < Number(game.numStackedTwoCards) * TWO_CARD_PENALTY){
                       console.log("Entered branch 5");
                         console.log("selectedCards.length < game.numStackedTwoCards * TWO_CARD_PENALTY")
@@ -335,11 +337,11 @@ function PlayRoom() {
 
     const onPublicMessageReceived = (payload) => {
         let payloadData = JSON.parse(payload.body);
-        console.log("Payload Data: " + payloadData)
+
         switch(payloadData.action){
             case "JOIN":
                 setAnnouncements((oldAnnouncements) => ([...oldAnnouncements, {id:uuidv4(), message:payloadData.message}]))
-                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
+                setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, roundNum: Number(payloadData.roundNum)}}));
                 if(payloadData.numPlayers === "4"){
                     requestStartingCards();
                     requestPublicInformation("starting top card");
@@ -347,6 +349,10 @@ function PlayRoom() {
                 break;
 
             case "UPDATE":
+                console.log("Checking if " + payloadData.message.toLowerCase() + " includes 'won'");
+                console.log(payloadData.message.toLowerCase().includes("won"));
+                console.log("Checking if " + payloadData.message.toLowerCase() + " includes 'round'");
+                console.log(payloadData.message.toLowerCase().includes("round"));
                 if(payloadData.message.toLowerCase().includes("won")){
                     let scores = payloadData.scores.split(",");
                     let payloadCards = JSON.parse(payloadData.cards);
@@ -354,17 +360,20 @@ function PlayRoom() {
                     newTopCard.id = uuidv4();
                     newTopCard.selected = false;
                     newTopCard.front = true;
-                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction, scores:scores}}));
+                    
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction, scores:scores, roundNum: Number(payloadData.roundNum) }}));
+                    setHand([]);
                     let newAnnouncement ={id:uuidv4(), message:payloadData.message};
                     setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, newAnnouncement]));
-                    if(payloadData.message.toLowerCase().includes("has won round")){
+                    if(payloadData.message.toLowerCase().includes("round")){
+                        console.log("got to this branch")
                         requestStartingCards();
                     }
-                    }
-
+                    
                 }
-                if(payloadData.message.toLowerCase() === "turn"){
-                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber}}));
+
+                else if(payloadData.message.toLowerCase() === "turn"){
+                    setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, roundNum: Number(payloadData.roundNum)}}));
                 }
 
                 else{
@@ -415,6 +424,7 @@ function PlayRoom() {
                 break;
             case "DRAW":
                 if(payloadData.message === "played"){
+                    setGame((oldGame) => ({...oldGame, ...{canSelectSuit: payloadData.selectSuit}}));
                     requestPublicInformation("top card");
                     break;
                 }
@@ -430,7 +440,7 @@ function PlayRoom() {
                if(payloadData.message.includes("You can't play up to")){
                    let newAnnouncements = payloadData.message.split("\n");
                    newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                   setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
+                   setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]));
                    requestPublicInformation("top card");
                }
 
@@ -443,6 +453,7 @@ function PlayRoom() {
 //                else{
                     setHand( (oldHand) => ([...oldHand, ...newCards]));
                     setPlayOrder([]);
+                    setGame( (oldGame) => ({...oldGame, ...{numCardsDrawn: Number(payloadData.numCardsDrawn), roundNum: Number(payloadData.roundNum)}}));
 //                }
 
                 break;
@@ -461,17 +472,11 @@ function PlayRoom() {
                         console.log("I include 'you have cards to avoid the two card penalty'");
                         let newAnnouncements = payloadData.message.split("\n");
                         let twoCardsCount = Number(payloadData.numStackedTwoCards);
-                        setGame((oldGame)=>({...oldGame, ...{numStackedTwoCards:twoCardsCount}}));
+                        setGame((oldGame)=>({...oldGame, ...{numStackedTwoCards:twoCardsCount, roundNum: Number(payloadData.roundNum)}}));
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]));
 
                         break;
-                    }
-
-                    else{
-                       console.log(payloadData.message + "does not include" + " You have card(s) you can play to avoid the two-card penalty");
-                       console.log("Undefined? :" + payloadData.message.includes("You can't play up to"))
-
                     }
 
                     newCards = JSON.parse(payloadData.cards);
@@ -484,7 +489,7 @@ function PlayRoom() {
                     })
                     setHand(newCards);
                     setPlayOrder([]);
-
+                    setGame((oldGame) => ({...oldGame, ...{canSelectSuit: payloadData.selectSuit}}));
                     //Update the top card if the card is played
                     if(payloadData.message.toLowerCase() === "yes"){
                         requestPublicInformation("top card");
@@ -496,7 +501,7 @@ function PlayRoom() {
                         let newAnnouncements = payloadData.message.split("\n");
                         console.log("message contains 'you play'");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]));
                         requestPublicInformation("top card");
 
                     }
@@ -505,8 +510,8 @@ function PlayRoom() {
                     else{
                         let newAnnouncements = payloadData.message.split("\n");
                         newAnnouncements = newAnnouncements.map( (announcement) => ({id: uuidv4(), message:announcement}));
-                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]);
-                        setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn}}));
+                        setAnnouncements( (oldAnnouncements) => ([...oldAnnouncements, ...newAnnouncements]));
+                        setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turn, roundNum: Number(payloadData.roundNum)}}));
                         requestPublicInformation("turn");
                     }
 
@@ -592,6 +597,17 @@ function PlayRoom() {
                     </li>
                 </ul>
 
+
+                <div className='round-number'>
+                    {game.roundNum > 0 &&
+                    <>
+                        <label>Round:</label>
+                        <span id="current-round" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(game.roundNum)}}/>
+                    </>
+            }
+                </div>
+
+
                 <div className='turn'>
                     <label>Turn:</label>
                     {game.turn > 0?<span id="current-turn" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize("Player " + game.turn)}}/>
@@ -638,10 +654,10 @@ function PlayRoom() {
 
 
             <div className='action-buttons'>
-                <button id='play-card-button' disabled={game.turn!==user.id} onClick={playCard}>Play Card(s)</button>
-                <button id='draw-card-button' disabled={game.turn!==user.id} onClick={drawCard}>Draw card</button>
+                <button id='play-card-button' disabled={game.turn!==user.id && game.canSelectSuit === "false"} onClick={playCard}>Play Card(s)</button>
+                <button id='draw-card-button' disabled={game.turn!==user.id  && game.canSelectSuit === "false" || game.numCardsDrawn >= 3} onClick={drawCard}>Draw card</button>
 
-                {game.topCard && game.topCard.rank === "8" && <div className="select-suit">
+                {game.canSelectSuit === "true" && <div className="select-suit">
                     <input id="suit-textbox" ref={suitInput} placeholder = "Enter suit you want to change to"></input>
                     <button id='send-suit-button' onClick={sendSuit}>Send</button>
                 </div>}

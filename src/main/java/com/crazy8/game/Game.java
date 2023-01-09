@@ -16,6 +16,8 @@ public class Game {
     private int numDiamondsCards;
     private int numClubsCards;
     private int numStackedTwoCards;
+
+    private int numCardsDrawn;
 //    private int numPlayerOneInitialCards;
 //    private int numPlayerTwoInitialCards;
 //    private int numPlayerThreeInitialCards;
@@ -30,6 +32,8 @@ public class Game {
     private int roundNum;
     private boolean endOfRound;
 
+    private ArrayList<Deck> riggedDecks;
+
 
     public Game(){
         deck = new Deck();
@@ -43,6 +47,7 @@ public class Game {
         direction = Direction.RIGHT;
         turn = 0;
         numStackedTwoCards = 0;
+        numCardsDrawn = 0;
 //        numPlayerOneInitialCards = 5;
 //        numPlayerTwoInitialCards = 5;
 //        numPlayerThreeInitialCards = 5;
@@ -50,6 +55,7 @@ public class Game {
         numPlayerInitialCards = new ArrayList(Arrays.asList(5,5,5,5));
         roundNum = 0;
         endOfRound = false;
+        riggedDecks = new ArrayList<>();
     }
 
 
@@ -130,40 +136,14 @@ public class Game {
         this.numPlayerInitialCards = numPlayerInitialCards;
     }
 
+    public int getNumCardsDrawn() {
+        return numCardsDrawn;
+    }
 
+    public void setNumCardsDrawn(int numCardsDrawn) {
+        this.numCardsDrawn = numCardsDrawn;
+    }
 
-    //    public int getNumPlayerOneInitialCards() {
-//        return numPlayerOneInitialCards;
-//    }
-//
-//    public void setNumPlayerOneInitialCards(int numPlayerOneInitialCards) {
-//        this.numPlayerOneInitialCards = numPlayerOneInitialCards;
-//    }
-//
-//    public int getNumPlayerTwoInitialCards() {
-//        return numPlayerTwoInitialCards;
-//    }
-//
-//    public void setNumPlayerTwoInitialCards(int numPlayerTwoInitialCards) {
-//        this.numPlayerTwoInitialCards = numPlayerTwoInitialCards;
-//    }
-//
-//    public int getNumPlayerThreeInitialCards() {
-//        return numPlayerThreeInitialCards;
-//    }
-//
-//    public void setNumPlayerThreeInitialCards(int numPlayerThreeInitialCards) {
-//        this.numPlayerThreeInitialCards = numPlayerThreeInitialCards;
-//    }
-//
-//    public int getNumPlayerFourInitialCards() {
-//        return numPlayerFourInitialCards;
-//    }
-//
-//    public void setNumPlayerFourInitialCards(int numPlayerFourInitialCards) {
-//        this.numPlayerFourInitialCards = numPlayerFourInitialCards;
-//    }
-//
 
     public void setDeck(Deck deck) {
         this.deck = deck;
@@ -179,6 +159,14 @@ public class Game {
 
     public void setEndOfRound(boolean endOfRound) {
         this.endOfRound = endOfRound;
+    }
+
+    public ArrayList<Deck> getRiggedDecks() {
+        return riggedDecks;
+    }
+
+    public void setRiggedDecks(ArrayList<Deck> riggedDecks) {
+        this.riggedDecks = riggedDecks;
     }
 
     public void updateCardCount(Card card){
@@ -225,7 +213,7 @@ public class Game {
         }
         Card newTopCard = deck.getCards().remove(0);
 
-        while(newTopCard.getRank() == Rank.EIGHT){
+        while(newTopCard.getRank() == Rank.EIGHT || newTopCard.getRank() == Rank.ACE || newTopCard.getRank() == Rank.QUEEN || newTopCard.getRank() == Rank.TWO){
             Collections.shuffle(deck.getCards());
         }
         topCard = newTopCard;
@@ -236,6 +224,8 @@ public class Game {
 
 
     public int updateTurn(){
+        numCardsDrawn = 0;
+        System.out.println("CODE: turn before updateTurn(): " + turn);
         if(topCard.getRank() == Rank.QUEEN){
             if(direction == Direction.LEFT){
                 if(turn == 4){
@@ -264,6 +254,7 @@ public class Game {
                     turn -= 2;
                 }
             }
+            System.out.println("CODE: turn after updateTurn(): " + turn);
             return turn;
         }
 
@@ -286,6 +277,7 @@ public class Game {
             turn -= 1;
             turn = turn < 1?4:turn;
         }
+        System.out.println("CODE: turn after updateTurn(): " + turn);
         return turn;
     }
 
@@ -299,7 +291,6 @@ public class Game {
         for(int i = 0; i < players.size(); ++i){
             Player player = players.get(i);
             player.setGameScore(player.getGameScore()+player.getRoundScore());
-            player.setRoundScore(0);
         }
     }
 
@@ -345,6 +336,7 @@ public class Game {
     }
 
     public int calculateScore(List<Card> playerHand){
+        System.out.println("Calculating the score for this hand: " + playerHand);
         int score = 0;
         for(int i = 0; i < playerHand.size(); ++i){
             Card card = playerHand.get(i);
@@ -365,6 +357,7 @@ public class Game {
                     score += Integer.parseInt(card.getRank().toString());
                 }
             }
+        System.out.println("The score is " + score);
             return score;
         }
 
@@ -372,6 +365,7 @@ public class Game {
     public Player getRoundWinner(){
         ArrayList<Integer> playersScores = new ArrayList<>();
         for(int i = 0; i < players.size(); ++i){
+            System.out.println("CODE: Player " + i + " has a score of " + players.get(i).getRoundScore());
             playersScores.add(players.get(i).getRoundScore());
         }
 

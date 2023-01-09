@@ -14,8 +14,11 @@ public class ServerMessage {
     private String id;
     private String numPlayers;
     private String currentPlayerTurn;
-
     private String numStackedTwoCards;
+    private String numCardsDrawn;
+
+
+    private String selectSuit;
 
 
 
@@ -25,14 +28,17 @@ public class ServerMessage {
         message = "";
         scores = "0,0,0,0";
         action = Action.JOIN;
-        direction = Direction.LEFT;
+        direction = Direction.RIGHT;
         turnNumber = "0";
         roundNum = "0";
         id = "-1";
         numPlayers = "0";
         currentPlayerTurn = "";
         numStackedTwoCards = "0";
+        numCardsDrawn = "0";
+        selectSuit = "false";
     }
+
 
     public String getName() {
         return name;
@@ -118,21 +124,12 @@ public class ServerMessage {
         this.currentPlayerTurn = currentPlayerTurn;
     }
 
+    public String getNumCardsDrawn() {
+        return numCardsDrawn;
+    }
 
-    @Override
-    public String toString() {
-        return "ServerMessage{" +
-                "name='" + name + '\'' +
-                ", cards='" + cards + '\'' +
-                ", message='" + message + '\'' +
-                ", scores='" + scores + '\'' +
-                ", action=" + action +
-                ", gameDirection='" + direction + '\'' +
-                ", turn='" + turnNumber + '\'' +
-                ", roundNum='" + roundNum + '\'' +
-                ", id='" + id + '\'' +
-                ", numPlayers='" + numPlayers + '\'' +
-                '}';
+    public void setNumCardsDrawn(String numCardsDrawn) {
+        this.numCardsDrawn = numCardsDrawn;
     }
 
     public String getCurrentPlayerTurn() {
@@ -146,4 +143,34 @@ public class ServerMessage {
     public void setNumStackedTwoCards(String numStackedTwoCards) {
         this.numStackedTwoCards = numStackedTwoCards;
     }
+
+    public String getSelectSuit() {
+        return selectSuit;
+    }
+
+    public void setSelectSuit(String selectSuit) {
+        this.selectSuit = selectSuit;
+    }
+
+
+    @Override
+    public String toString() {
+        return "ServerMessage{" +
+                "name='" + name + '\'' +
+                ", cards='" + cards + '\'' +
+                ", message='" + message + '\'' +
+                ", scores='" + scores + '\'' +
+                ", action=" + action +
+                ", direction=" + direction +
+                ", turnNumber='" + turnNumber + '\'' +
+                ", roundNum='" + roundNum + '\'' +
+                ", id='" + id + '\'' +
+                ", numPlayers='" + numPlayers + '\'' +
+                ", currentPlayerTurn='" + currentPlayerTurn + '\'' +
+                ", numStackedTwoCards='" + numStackedTwoCards + '\'' +
+                ", numCardsDrawn='" + numCardsDrawn + '\'' +
+                ", selectSuit='" + selectSuit + '\'' +
+                '}';
+    }
 }
+

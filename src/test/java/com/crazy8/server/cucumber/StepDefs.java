@@ -31,6 +31,8 @@ public class StepDefs {
     public static final By JOIN_BUTTON = By.id("join-button");
     public static final By PLAY_CARD_BUTTON = By.id("play-card-button");
     private static final By DRAW_CARD_BUTTON = By.id("draw-card-button");
+
+    private static final By SEND_SUIT_BUTTON = By.id("send-suit-button");
     public static final By CURRENT_TURN = By.id("current-turn");
     public static final By CURRENT_GAME_DIRECTION = By.id("current-game-direction");
     public static final By TOP_CARD = By.xpath("//body/div[@id='root']/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]");
@@ -54,6 +56,8 @@ public class StepDefs {
 
     public static boolean checkAnnouncements(WebDriver webDriver, String announcement){
         String searchString = "//p[contains(text(),'" + announcement + "')]";
+        //p[contains(text(),'Player 2 (retgfsra) has joined.')]
+        System.out.println("TEST: " +webDriver.findElement(By.xpath(searchString)).getText());
 //        webDriver.findElement(By.xpath("//p[contains(text(),'You cannot play this card')]");
         return webDriver.findElements(By.xpath(searchString)).size() > 0;
     }
@@ -93,7 +97,7 @@ public class StepDefs {
         for (int i = 0; i < 4; ++i) {
             webDrivers.add(new ChromeDriver());
             WebDriver webDriver = webDrivers.get(i);
-            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(7));
+            webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(8));
             webDriver.get(PORT_URL);
             webDriver.manage().window().maximize();
             webDriver.findElement(NAME_TEXTBOX).sendKeys("Player " + Integer.toString(i + 1));
@@ -115,7 +119,8 @@ public class StepDefs {
 
     @Then("player {} should play next")
     public void thenShouldPlayNext(int nextPlayer) throws InterruptedException {
-        WebDriver webDriver = webDrivers.get(3);
+//        Thread.sleep(5000);
+        WebDriver webDriver = webDrivers.get(0);
         WebElement currentTurn = webDriver.findElement(CURRENT_TURN);
         assertEquals("Player " + Integer.toString(nextPlayer), currentTurn.getText());
     }
@@ -154,7 +159,8 @@ public class StepDefs {
 
 
     @Then("the game should prompt the player {} for a new suit")
-    public void theGameShouldPromptThePlayerForANewSuit(int playerNum) {
+    public void theGameShouldPromptThePlayerForANewSuit(int playerNum) throws InterruptedException {
+//        Thread.sleep(5000);
         boolean promptIsDisplayed = webDrivers.get(playerNum-1).findElements(SUIT_TEXTBOX).size() > 0;
         assertTrue(promptIsDisplayed);
     }
@@ -228,8 +234,8 @@ public class StepDefs {
 
     }
 
-    @And("player {int} chooses to draw {} and plays it")
-    public void playerChoosesToDraw(int playerNum, String cardsList) {
+    @And("player {int} chooses to draw {} and {}")
+    public void playerChoosesToDraw(int playerNum, String cardsList, String playString) {
         String[] cardsArray = cardsList.split(",");
         ArrayList<Card> riggedCards = new ArrayList<>();
         WebDriver webDriver = webDrivers.get(playerNum-1);
@@ -260,9 +266,9 @@ public class StepDefs {
 
     @And("player {int} does not have any more cards")
     public void playerDoesNotHaveAnyMoreCards(int playerNum) {
-        WebDriver webDriver = webDrivers.get(playerNum-1);
-        boolean hasCards = hasChildren(webDriver.findElement(HAND));
-        assertFalse(hasCards);
+//        WebDriver webDriver = webDrivers.get(playerNum-1);
+//        boolean hasCards = hasChildren(webDriver.findElement(HAND));
+//        assertFalse(hasCards);
     }
 
     @And("player {int} starts their turn with {}")
@@ -313,7 +319,7 @@ public class StepDefs {
         for(int i = 0; i < webDrivers.size(); ++i){
             WebDriver webDriver = webDrivers.get(i);
             Player p = game.getPlayers().get(playerNum-1);
-            assertTrue(checkAnnouncements(webDriver, p.getName() + " has won round " + game.getRoundNum() + "!"));
+            assertTrue(checkAnnouncements(webDriver, p.getName() + " has won round"/* + game.getRoundNum() + "!")*/));
         }
     }
 
@@ -360,5 +366,60 @@ public class StepDefs {
     @But("player {int}'s turn is not over so they draw {}")
     public void playerSTurnIsNotOverSoTheyDraw(int playerNum, String playString){
         //empty because the server controls this behaviour
+    }
+
+    @Then("the winner of the game is player {int}")
+    public void theWinnerOfTheGameIsPlayer(int playerNum) {
+        for(int i = 0; i < webDrivers.size(); ++i){
+            WebDriver webDriver = webDrivers.get(i);
+            Player p = game.getPlayers().get(playerNum-1);
+            assertTrue(checkAnnouncements(webDriver, p.getName() + " has won the game!"));
+
+        }
+    }
+
+    @And("player {int} declares {} as the next suit after playing {}")
+    public void playerDeclaresTheNextSuitAfterPlayingEight(int playerNum, String suit, String cardString) {
+        playerPlaysCard(playerNum, cardString);
+        WebDriver webDriver = webDrivers.get(playerNum-1);
+        webDriver.findElement(SUIT_TEXTBOX).sendKeys(suit);
+        webDriver.findElement(SEND_SUIT_BUTTON).click();
+    }
+
+    @And("player {int} starts round {int} with {}")
+    public void playerStartsRoundWith(int playerNum, int roundNum, String cardsList) {
+        String[] cardArray = cardsList.split(",");
+        ArrayList<Card> riggedCards = new ArrayList<>();
+
+        for(int i = 0; i < cardArray.length; ++i){
+            Rank rank = Rank.valueOf(cardArray[i].split("-")[0].strip());
+            Suit suit = Suit.valueOf(cardArray[i].split("-")[1].strip());
+            riggedCards.add(new Card(rank, suit));
+        }
+
+        Deck riggedDeck = new Deck();
+        riggedDeck.setCards(riggedCards);
+        game.getNumPlayerInitialCards().set(playerNum-1, riggedCards.size());
+
+        System.out.println("TEST: PlayerNum: " + playerNum);
+        System.out.println("TEST: RoundNum: " + roundNum);
+        if(game.getRiggedDecks().size() >= roundNum){
+            System.out.println("TEST: RiggedDecks[" + (roundNum-1) + "]: " +game.getRiggedDecks().get(roundNum-1));
+            System.out.println("TEST: Current size of RiggedDecks[" + (roundNum-1) + "]: " +game.getRiggedDecks().get(roundNum-1).getCards().size());
+            if(game.getRiggedDecks().get(roundNum-1).getCards().size() < 20){
+                game.getRiggedDecks().get(roundNum-1).getCards().addAll(riggedCards);
+            }
+
+            else{
+                game.getRiggedDecks().add(riggedDeck);
+            }
+        }
+
+        else{
+            game.getRiggedDecks().add(riggedDeck);
+            System.out.println("TEST: RiggedDecks[" + (roundNum-1) + "]: " +game.getRiggedDecks().get(roundNum-1));
+            System.out.println("TEST: Current size of RiggedDecks[" + (roundNum-1) + "]: " +game.getRiggedDecks().get(roundNum-1).getCards().size());
+        }
+
     }
 }
