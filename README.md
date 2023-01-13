@@ -14,6 +14,6 @@ The rules for the game can be found [here](https://www.aquatennial.com/wp-conten
 
 
 ## Demo
-<img width="959" alt="image" src="https://user-images.githubusercontent.com/51683551/212378013-06ca8be2-41e6-4a81-a6fe-b6e196913d85.png">
+<img width="865" alt="image" src="https://user-images.githubusercontent.com/51683551/212390681-f4beadd3-217e-4c26-a91f-d494e2ea4981.png">
 
 [Video Demo](https://youtu.be/toV59FuZVkk)
