@@ -29,7 +29,7 @@ function PlayRoom() {
         numStackedTwoCards:0,
         numCardsDrawn:0,
         roundNum:0,
-        canSelectSuit: false
+        canSelectSuit: "false"
     })
 
     const [announcements, setAnnouncements] = useState([]);
@@ -77,9 +77,9 @@ function PlayRoom() {
         sessionStorage.setItem(HAND_STORAGE_KEY, JSON.stringify(hand));
       }, [hand])
 
-    //   useEffect( () => {
-    //     console.log("Current user", user);
-    //   }, [user])
+      useEffect( () => {
+        console.log("Current user", user);
+      }, [user])
 
 
       useEffect( () => {
@@ -382,6 +382,10 @@ function PlayRoom() {
                     newTopCard.id = uuidv4();
                     newTopCard.selected = false;
                     newTopCard.front = true;
+
+                    if(payloadData.message.toLowerCase().includes("declared")){
+                        setGame( (oldGame) => ({...oldGame, ...{canSelectSuit:payloadData.selectSuit}}))
+                    }
                     setGame((oldGame)=>({...oldGame, ...{turn:payloadData.turnNumber, topCard:newTopCard, direction:payloadData.direction}}));
 
 

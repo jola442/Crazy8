@@ -110,6 +110,12 @@ public class MessageController {
             }
         }
 
+        else{
+            if(!game.isRiggedRound()){
+                game.setTurn(1);
+            }
+        }
+
 
 
         if(game.getTopCard() == null){
@@ -158,7 +164,7 @@ public class MessageController {
         response.setNumPlayers(Integer.toString(game.getPlayers().size()));
 
         if(game.getPlayers().size() == 4){
-            System.out.println("CODE: Round number is now 1");
+//            System.out.println("CODE: Round number is now 1");
             startNewRound();
             response.setTurnNumber(Integer.toString(game.getTurn()));
         }
@@ -166,7 +172,7 @@ public class MessageController {
     }
 
     private ServerMessage handleSendingTopCard(@Payload ClientMessage message){
-        System.out.println("CODE: Handle sending top card was called");
+//        System.out.println("CODE: Handle sending top card was called");
         ServerMessage response = initResponse(message);
 
         ArrayList<Card> newTopCard = new ArrayList<>();
@@ -182,14 +188,14 @@ public class MessageController {
                 response = initResponse(message);
             }
             newTopCard.add(game.getTopCard());
-            System.out.println("CODE: Game top card is not null");
-            System.out.println("CODE: Round Number :" + game.getRoundNum());
+//            System.out.println("CODE: Game top card is not null");
+//            System.out.println("CODE: Round Number :" + game.getRoundNum());
 
             if(game.isEndOfRound()){
                 game.updateRoundScores();
                 game.updateGameScores();
                 Player roundWinner = game.getRoundWinner();
-                System.out.println("CODE: This player is the winner: " + roundWinner);
+//                System.out.println("CODE: This player is the winner: " + roundWinner);
                 StringBuilder scores = new StringBuilder();
                 if(roundWinner != null){
                     msg.append(roundWinner.getName() + " has won round " + game.getRoundNum() + "!\n");
@@ -202,7 +208,7 @@ public class MessageController {
 
                     for(int i = 0; i < playerScores.length; ++i){
                         playerScores[i] =  Integer.toString(game.getPlayers().get(i).getGameScore());
-                        System.out.println("CODE: player hand after reset" + game.getPlayers().get(i).getHand());
+//                        System.out.println("CODE: player hand after reset" + game.getPlayers().get(i).getHand());
                         if(i < playerScores.length-1){
                             scores.append(playerScores[i] + ",");
                         }
@@ -213,7 +219,7 @@ public class MessageController {
                     }
 
                     response.setScores(scores.toString());
-                    System.out.println("CODE: Scores being sent to the client: " + response.getScores());
+//                    System.out.println("CODE: Scores being sent to the client: " + response.getScores());
                     response.setCards(stringifyCards(newTopCard));
                 }
 
@@ -281,12 +287,12 @@ public class MessageController {
                 }
 
                 msg.append("Player ").append(firstPlayer).append(" played a QUEEN causing Player ").append(secondPlayer).append(" to miss their turn");
-                System.out.println("CODE: " + msg);
+//                System.out.println("CODE: " + msg);
 
             }
 
             response.setMessage(msg.toString());
-            System.out.println("CODE: Setting the top card to " + game.getTopCard());
+//            System.out.println("CODE: Setting the top card to " + game.getTopCard());
             newTopCard.add(game.getTopCard());
         }
 
@@ -304,7 +310,7 @@ public class MessageController {
         ArrayList<Card> newTopCard = new ArrayList<>();
         newTopCard.add(game.getTopCard());
         response.setCards(stringifyCards(newTopCard));
-        System.out.println("CODE: Sending the starting top card to all players " + newTopCard);
+//        System.out.println("CODE: Sending the starting top card to all players " + newTopCard);
 
         return response;
     }
@@ -356,7 +362,7 @@ public class MessageController {
     private  ServerMessage handleSendingStartingCards(@Payload ClientMessage message, Player player) {
         ServerMessage response = initResponse(message);
 
-        System.out.println("CODE: Sending starting cards to " + player.getName() + ": " + player.getHand());
+//        System.out.println("CODE: Sending starting cards to " + player.getName() + ": " + player.getHand());
         response.setCards(stringifyCards(player.getHand()));
         response.setMessage(message.getMessage());
         return response;
@@ -368,14 +374,14 @@ public class MessageController {
         Card drawnCard = game.drawCard(player);
         if (drawnCard != null) {
             game.setNumCardsDrawn(game.getNumCardsDrawn()+1);
-            System.out.println("CODE:" + drawnCard + " is drawn");
+//            System.out.println("CODE:" + drawnCard + " is drawn");
             if(game.playCard(player,drawnCard) != null){
                 if(game.getTopCard().getRank() == Rank.EIGHT){
                     response.setSelectSuit("true");
                     response.setMessage("played");
                     return response;
                 }
-                System.out.println("CODE: " + drawnCard + " can be played");
+//                System.out.println("CODE: " + drawnCard + " can be played");
                 response.setMessage("played");
                 game.updateTurn();
                 return response;
@@ -406,7 +412,7 @@ public class MessageController {
                 player.getHand().contains(new Card (Rank.TWO, Suit.DIAMONDS));
         StringBuilder msg = new StringBuilder(game.getNumStackedTwoCards() + " player(s) played a " + game.getTopCard() + "\n So you have to play " + numCardsToPlay + " cards or draw " + numCardsToPlay + " cards\n");
         if(playerCanPlay || playerHasATwo){
-            System.out.println("CODE: " + player.getName() + " can play");
+//            System.out.println("CODE: " + player.getName() + " can play");
             response.setAction(Action.PLAY);
             msg.append("You have card(s) you can play to avoid the two-card penalty");
         }
@@ -414,7 +420,7 @@ public class MessageController {
         else{
             response.setAction(Action.DRAW);
             msg.append("You can't play up to ").append(numCardsToPlay).append(" cards \n So ");
-            System.out.println("CODE: " + player.getName() + " has to draw " + numCardsToPlay + " cards");
+//            System.out.println("CODE: " + player.getName() + " has to draw " + numCardsToPlay + " cards");
             ArrayList<Card> drawnCards = new ArrayList<>();
 
             for(int i = 0; i < numCardsToPlay; i++){
@@ -424,7 +430,7 @@ public class MessageController {
 
             }
 
-            System.out.println("CODE: Drawn cards: " + drawnCards);
+//            System.out.println("CODE: Drawn cards: " + drawnCards);
 
             //Play the first playable card drawn from the 2-card penalty
             if(game.canPlayFromHand(player)){
@@ -484,7 +490,7 @@ public class MessageController {
                     return response;
                 }
 
-                System.out.println("CODE: Player " + game.getTurn() + " plays a " + card);
+//                System.out.println("CODE: Player " + game.getTurn() + " plays a " + card);
 
 
                 //If the selected card cannot be played
@@ -541,7 +547,7 @@ public class MessageController {
                         }
                     }
 
-                    System.out.println("CODE: Num drawn cards: "+numDrawnCards);
+//                    System.out.println("CODE: Num drawn cards: "+numDrawnCards);
 
                     //If after 3 draws, the player can play a card, play it. Update the turn regardless
                     if(numDrawnCards == 3){
@@ -578,10 +584,10 @@ public class MessageController {
                     response.setMessage("yes");
                     if(player.getHand().size() == 0){
                         game.setEndOfRound(true);
-                        System.out.println("CODE: " + player.getName() + " has no more cards");
+//                        System.out.println("CODE: " + player.getName() + " has no more cards");
 
                     }
-                    System.out.println("CODE: Played a " + card);
+//                    System.out.println("CODE: Played a " + card);
                 }
 
             }
@@ -613,19 +619,19 @@ public class MessageController {
                                 response.setSelectSuit("true");
                             }
                         }
-                        System.out.println("CODE: Successfully played " + cards.get(i));
+//                        System.out.println("CODE: Successfully played " + cards.get(i));
                     }
 
-                    else{
-                        System.out.println("CODE: Unable to play " + cards.get(i));
-                    }
+//                    else{
+//                        System.out.println("CODE: Unable to play " + cards.get(i));
+//                    }
                 }
 
                 if(player.getHand().size() == 0){
                     game.updateTurn();
                     game.setEndOfRound(true);
                     response.setSelectSuit("false");
-                    System.out.println("CODE: " + player.getName() + " has no more cards");
+//                    System.out.println("CODE: " + player.getName() + " has no more cards");
 //                    for(int i = 0; i < game.getPlayers().size(); ++i){
 //                        Player p = game.getPlayers().get(i);
 //                        int score = game.calculateScore(p.getHand());

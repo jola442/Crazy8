@@ -34,6 +34,8 @@ public class Game {
 
     private ArrayList<Deck> riggedDecks;
 
+    private boolean riggedRound;
+
 
     public Game(){
         deck = new Deck();
@@ -56,6 +58,7 @@ public class Game {
         roundNum = 0;
         endOfRound = false;
         riggedDecks = new ArrayList<>();
+        riggedRound = false;
     }
 
 
@@ -169,6 +172,14 @@ public class Game {
         this.riggedDecks = riggedDecks;
     }
 
+    public boolean isRiggedRound() {
+        return riggedRound;
+    }
+
+    public void setRiggedRound(boolean riggedRound) {
+        this.riggedRound = riggedRound;
+    }
+
     public void updateCardCount(Card card){
         if(card.getSuit() == Suit.DIAMONDS){
             numDiamondsCards--;
@@ -225,7 +236,7 @@ public class Game {
 
     public int updateTurn(){
         numCardsDrawn = 0;
-        System.out.println("CODE: turn before updateTurn(): " + turn);
+//        System.out.println("CODE: turn before updateTurn(): " + turn);
         if(topCard.getRank() == Rank.QUEEN){
             if(direction == Direction.LEFT){
                 if(turn == 4){
@@ -254,7 +265,7 @@ public class Game {
                     turn -= 2;
                 }
             }
-            System.out.println("CODE: turn after updateTurn(): " + turn);
+//            System.out.println("CODE: turn after updateTurn(): " + turn);
             return turn;
         }
 
@@ -277,7 +288,7 @@ public class Game {
             turn -= 1;
             turn = turn < 1?4:turn;
         }
-        System.out.println("CODE: turn after updateTurn(): " + turn);
+//        System.out.println("CODE: turn after updateTurn(): " + turn);
         return turn;
     }
 
@@ -336,7 +347,7 @@ public class Game {
     }
 
     public int calculateScore(List<Card> playerHand){
-        System.out.println("Calculating the score for this hand: " + playerHand);
+//        System.out.println("Calculating the score for this hand: " + playerHand);
         int score = 0;
         for(int i = 0; i < playerHand.size(); ++i){
             Card card = playerHand.get(i);
@@ -357,7 +368,7 @@ public class Game {
                     score += Integer.parseInt(card.getRank().toString());
                 }
             }
-        System.out.println("The score is " + score);
+//        System.out.println("The score is " + score);
             return score;
         }
 
@@ -365,7 +376,7 @@ public class Game {
     public Player getRoundWinner(){
         ArrayList<Integer> playersScores = new ArrayList<>();
         for(int i = 0; i < players.size(); ++i){
-            System.out.println("CODE: Player " + i + " has a score of " + players.get(i).getRoundScore());
+//            System.out.println("CODE: Player " + i + " has a score of " + players.get(i).getRoundScore());
             playersScores.add(players.get(i).getRoundScore());
         }
 
@@ -400,6 +411,8 @@ public class Game {
         return null;
     }
 
+
+
     public void resetState(){
         deck = new Deck();
         deck.getCards().clear();
@@ -415,6 +428,7 @@ public class Game {
         numStackedTwoCards = 0;
         roundNum = 0;
         endOfRound = false;
+        riggedRound = true;
     }
 
 
